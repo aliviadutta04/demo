@@ -35,9 +35,9 @@ public class EmployeePage extends BasePage {
     private By searchButton = By.xpath("//button[normalize-space()='Search']");
 
     //private By employeeCheckbox = By.xpath("//div[@role='row']//input[@type='checkbox']");
-    private By employeeCheckbox = By.xpath("//div[@class='oxd-table-card-cell-checkbox']//i[@class='oxd-icon bi-check oxd-checkbox-input-icon']");
+    // private By employeeCheckbox = By.xpath("//div[@class='oxd-table-card-cell-checkbox']//i[@class='oxd-icon bi-check oxd-checkbox-input-icon']");
 
-    private By deleteButton = By.xpath("//button[contains(@class,'oxd-button') and normalize-space()='Delete']");
+    // private By deleteButton = By.xpath("//button[contains(@class,'oxd-button') and normalize-space()='Delete']");
 
     private By confirmDeleteButton = By.xpath("//button[normalize-space()='Yes, Delete']");
 
@@ -46,6 +46,9 @@ public class EmployeePage extends BasePage {
 // private List<WebElement> validationMessages;
 private By validationMessage =
         By.xpath("//span[contains(@class,'oxd-input-field-error-message')]");
+        private By employeeCheckbox = By
+            .xpath("(//div[@role='row']//input[@type='checkbox'])[last()]/following-sibling::*[1]");
+    private By deleteButton = By.xpath("(//div[@role='row']//button[@type='button'])[last()]");
 
 
     public void openPIM() {
