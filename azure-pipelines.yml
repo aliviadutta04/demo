@@ -1,0 +1,77 @@
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+
+# --------------------------------------------------
+# 1. Setup Java
+# --------------------------------------------------
+
+- task: JavaToolInstaller@0
+  inputs:
+    versionSpec: '21'
+    jdkArchitectureOption: 'x64'
+    jdkSourceOption: 'PreInstalled'
+  displayName: 'Setup Java 21'
+
+
+# --------------------------------------------------
+# 2. Verify Java and Maven
+# --------------------------------------------------
+
+- script: |
+    java -version
+    mvn -version
+  displayName: 'Verify Java and Maven'
+
+
+# --------------------------------------------------
+# 3. Run Selenium + Cucumber tests
+# --------------------------------------------------
+
+- script: |
+    mvn clean test -Dheadless=true
+  displayName: 'Run Selenium Cucumber Tests'
+
+
+# --------------------------------------------------
+# 4. Publish JUnit test results
+# --------------------------------------------------
+
+- task: PublishTestResults@2
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/target/surefire-reports/TEST-*.xml'
+    failTaskOnFailedTests: false
+    testRunTitle: 'OrangeHRM Selenium Cucumber Tests'
+  displayName: 'Publish Test Results'
+
+
+# --------------------------------------------------
+# 5. Publish Cucumber HTML report
+# --------------------------------------------------
+
+- task: PublishBuildArtifacts@1
+  condition: succeededOrFailed()
+  inputs:
+    PathtoPublish: 'target/cucumber-report'
+    ArtifactName: 'Cucumber-HTML-Report'
+    publishLocation: 'Container'
+  displayName: 'Publish Cucumber HTML Report'
+
+
+# --------------------------------------------------
+# 6. Publish failure screenshots
+# --------------------------------------------------
+
+- task: PublishBuildArtifacts@1
+  condition: succeededOrFailed()
+  inputs:
+    PathtoPublish: 'target/screenshots'
+    ArtifactName: 'Failure-Screenshots'
+    publishLocation: 'Container'
+  displayName: 'Publish Failure Screenshots'
