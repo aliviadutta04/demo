@@ -1,13 +1,29 @@
 trigger:
   - main
 
+parameters:
+
+- name: cucumberTag
+  displayName: 'Select Cucumber Tag'
+  type: string
+  default: '@smoke'
+
 pool:
   vmImage: 'ubuntu-latest'
 
 steps:
 
 # --------------------------------------------------
-# 1. Setup Java
+# 1. Display selected tag
+# --------------------------------------------------
+
+- script: |
+    echo "Selected Cucumber Tag: ${{ parameters.cucumberTag }}"
+  displayName: 'Display Selected Tag'
+
+
+# --------------------------------------------------
+# 2. Setup Java
 # --------------------------------------------------
 
 - task: JavaToolInstaller@0
@@ -19,7 +35,7 @@ steps:
 
 
 # --------------------------------------------------
-# 2. Verify Java and Maven
+# 3. Verify Java and Maven
 # --------------------------------------------------
 
 - script: |
@@ -29,16 +45,17 @@ steps:
 
 
 # --------------------------------------------------
-# 3. Run Selenium + Cucumber tests
+# 4. Run selected Cucumber tag
 # --------------------------------------------------
 
 - script: |
-    mvn clean test -Dheadless=true
+    echo "Running tests with tag: ${{ parameters.cucumberTag }}"
+    mvn clean test -Dheadless=true "-Dcucumber.filter.tags=${{ parameters.cucumberTag }}"
   displayName: 'Run Selenium Cucumber Tests'
 
 
 # --------------------------------------------------
-# 4. Publish JUnit test results
+# 5. Publish JUnit test results
 # --------------------------------------------------
 
 - task: PublishTestResults@2
@@ -52,7 +69,7 @@ steps:
 
 
 # --------------------------------------------------
-# 5. Publish Cucumber HTML report
+# 6. Publish Cucumber HTML report
 # --------------------------------------------------
 
 - task: PublishBuildArtifacts@1
@@ -65,7 +82,7 @@ steps:
 
 
 # --------------------------------------------------
-# 6. Publish failure screenshots
+# 7. Publish failure screenshots
 # --------------------------------------------------
 
 - task: PublishBuildArtifacts@1
