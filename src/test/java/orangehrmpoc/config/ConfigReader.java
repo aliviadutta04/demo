@@ -27,16 +27,21 @@ public class ConfigReader {
 
     public static String get(String key) {
 
-        String value = properties.getProperty(key);
+    String systemValue = System.getProperty(key);
 
-        if (value == null) {
-
-            throw new RuntimeException(
-                    "Property not found in config.properties: "
-                            + key);
-        }
-
-        return value;
+    if (systemValue != null) {
+        return systemValue;
     }
+
+    String value = properties.getProperty(key);
+
+    if (value == null) {
+        throw new RuntimeException(
+                "Property not found in config.properties: " + key
+        );
+    }
+
+    return value;
+}
     
 }
