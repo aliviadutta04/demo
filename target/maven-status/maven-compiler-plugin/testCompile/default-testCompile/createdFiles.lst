@@ -1,8 +1,14 @@
-orangehrmpoc\pages\LoginPage.class
+orangehrmpoc\utils\JsonDataReader.class
 orangehrmpoc\driver\DriverFactory.class
+orangehrmpoc\api\ApiClient.class
 orangehrmpoc\config\ConfigReader.class
-orangehrmpoc\hooks\Hooks.class
+orangehrmpoc\pages\RolePage.class
 orangehrmpoc\steps\LoginSteps.class
+orangehrmpoc\pages\DashboardPage.class
+orangehrmpoc\pages\LoginPage.class
+orangehrmpoc\api\EmployeeApi.class
+orangehrmpoc\hooks\Hooks.class
+orangehrmpoc\pages\EmployeePage.class
 orangehrmpoc\steps\EmployeeSteps.class
 orangehrmpoc\pages\BasePage.class
 orangehrmpoc\runner\CucumberTest.class
