@@ -7,6 +7,12 @@ parameters:
   displayName: 'Select Cucumber Tag'
   type: string
   default: '@smoke'
+  values:
+    - '@smoke'
+    - '@negative'
+    - '@employee'
+    - '@smoke and @employee'
+    - '@smoke or @negative'
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -14,29 +20,19 @@ pool:
 steps:
 
 # --------------------------------------------------
-# 1. Display selected tag
+# 1. Display selected Cucumber tag
 # --------------------------------------------------
 
 - script: |
-    echo "Selected Cucumber Tag: ${{ parameters.cucumberTag }}"
+    echo "======================================"
+    echo "Selected Cucumber Tag:"
+    echo "${{ parameters.cucumberTag }}"
+    echo "======================================"
   displayName: 'Display Selected Tag'
 
-- script: |
-    echo "======================================"
-    echo "SUREFIRE REPORTS"
-    echo "======================================"
 
-    find target/surefire-reports -type f -maxdepth 1 -print
-
-    echo "======================================"
-    echo "TEST REPORT CONTENT"
-    echo "======================================"
-
-    cat target/surefire-reports/*.txt || true
-  condition: succeededOrFailed()
-  displayName: 'Print Surefire Test Results'
 # --------------------------------------------------
-# 2. Setup Java
+# 2. Setup Java 21
 # --------------------------------------------------
 
 - task: JavaToolInstaller@0
@@ -58,17 +54,61 @@ steps:
 
 
 # --------------------------------------------------
-# 4. Run selected Cucumber tag
+# 4. Run Selenium Cucumber Tests
 # --------------------------------------------------
 
 - script: |
-    echo "Running tests with tag: ${{ parameters.cucumberTag }}"
-    mvn clean test -Dheadless=true "-Dcucumber.filter.tags=${{ parameters.cucumberTag }}"
+    echo "======================================"
+    echo "Running Selenium Cucumber Tests"
+    echo "Tag: ${{ parameters.cucumberTag }}"
+    echo "======================================"
+
+    mvn clean test \
+      -Dheadless=true \
+      "-Dcucumber.filter.tags=${{ parameters.cucumberTag }}"
   displayName: 'Run Selenium Cucumber Tests'
 
 
 # --------------------------------------------------
-# 5. Publish JUnit test results
+# 5. Print Surefire Error Details
+# --------------------------------------------------
+
+- script: |
+    echo "======================================"
+    echo "SUREFIRE REPORTS"
+    echo "======================================"
+
+    if [ -d "target/surefire-reports" ]; then
+
+      echo "Surefire files:"
+      find target/surefire-reports -maxdepth 1 -type f -print
+
+      echo ""
+      echo "======================================"
+      echo "SUREFIRE TEST REPORT CONTENT"
+      echo "======================================"
+
+      for file in target/surefire-reports/*.txt; do
+        if [ -f "$file" ]; then
+          echo ""
+          echo "--------------------------------------"
+          echo "File: $file"
+          echo "--------------------------------------"
+          cat "$file"
+        fi
+      done
+
+    else
+
+      echo "No target/surefire-reports directory found."
+
+    fi
+  condition: succeededOrFailed()
+  displayName: 'Print Surefire Test Results'
+
+
+# --------------------------------------------------
+# 6. Publish JUnit Test Results
 # --------------------------------------------------
 
 - task: PublishTestResults@2
@@ -82,7 +122,7 @@ steps:
 
 
 # --------------------------------------------------
-# 6. Publish Cucumber HTML report
+# 7. Publish Cucumber HTML Report
 # --------------------------------------------------
 
 - task: PublishBuildArtifacts@1
@@ -95,7 +135,27 @@ steps:
 
 
 # --------------------------------------------------
-# 7. Publish failure screenshots
+# 8. Ensure Screenshot Directory Exists
+# --------------------------------------------------
+
+- script: |
+    echo "Checking screenshot directory..."
+
+    if [ -d "target/screenshots" ]; then
+      echo "Screenshot directory already exists."
+      echo "Files:"
+      find target/screenshots -type f -print
+    else
+      echo "No screenshots were generated."
+      echo "Creating empty screenshot directory..."
+      mkdir -p target/screenshots
+    fi
+  condition: succeededOrFailed()
+  displayName: 'Ensure Screenshot Directory'
+
+
+# --------------------------------------------------
+# 9. Publish Failure Screenshots
 # --------------------------------------------------
 
 - task: PublishBuildArtifacts@1
