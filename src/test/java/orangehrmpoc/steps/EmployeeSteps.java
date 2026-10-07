@@ -33,34 +33,31 @@ public class EmployeeSteps {
     }
 
     @When("I create a new employee using {string} data")
-    public void createNewEmployee(String testCase) {
+public void createNewEmployee(String testCase) {
 
-        currentTestCase = testCase;
-        employeePage = new EmployeePage();
+    currentTestCase = testCase;
+    employeePage = new EmployeePage();
 
-        JsonObject employee = JsonDataReader.getEmployee(testCase);
+    JsonObject employee = JsonDataReader.getEmployee(testCase);
 
-        JsonObject createData = employee.getAsJsonObject("create");
+    JsonObject createData = employee.getAsJsonObject("create");
 
-        employeePage.openPIM();
-        employeePage.openAddEmployee();
+    employeePage.openPIM();
+    employeePage.openAddEmployee();
 
-        employeePage.enterEmployeeDetails(
-                createData.get("firstName").getAsString(),
-                createData.get("middleName").getAsString(),
-                createData.get("lastName").getAsString());
+    employeePage.enterEmployeeDetails(
+            createData.get("firstName").getAsString(),
+            createData.get("middleName").getAsString(),
+            createData.get("lastName").getAsString());
 
-        employeePage.saveEmployee();
+    employeePage.saveEmployee();
 
-        // UI Employee ID - used for UI operations such as search/delete
-        employeeId = employeePage.getEmployeeId();
+    employeeId = employeePage.getEmployeeId();
+    employeeNumber = employeePage.getEmployeeNumberFromUrl();
 
-        // Internal empNumber - used by API
-        employeeNumber = employeePage.getEmployeeNumberFromUrl();
-
-        System.out.println("UI Employee ID : " + employeeId);
-        System.out.println("API empNumber  : " + employeeNumber);
-    }
+    System.out.println("UI Employee ID : " + employeeId);
+    System.out.println("API empNumber  : " + employeeNumber);
+}
 
     @Then("the employee should be created successfully")
     public void employeeShouldBeCreatedSuccessfully() {
@@ -145,4 +142,53 @@ public class EmployeeSteps {
                 "Employee was not deleted successfully",
                 employeePage.isEmployeeDeleted());
     }
+   @When("I try to create an employee using {string} data")
+public void tryToCreateEmployee(String testCase) {
+
+    currentTestCase = testCase;
+    employeePage = new EmployeePage();
+
+    JsonObject employee = JsonDataReader.getEmployee(testCase);
+
+    JsonObject createData = employee.getAsJsonObject("create");
+
+    employeePage.openPIM();
+    employeePage.openAddEmployee();
+
+    employeePage.enterEmployeeDetails(
+            createData.get("firstName").getAsString(),
+            createData.get("middleName").getAsString(),
+            createData.get("lastName").getAsString());
+
+    employeePage.saveEmployee();
+}
+@Then("the employee should not be created")
+public void employeeShouldNotBeCreated() {
+
+    assertTrue(
+            "Employee was created even though mandatory fields were missing",
+            employeePage.isEmployeeValidationMessageDisplayed());
+}
+@Then("the employee validation message should be displayed")
+public void employeeValidationMessageShouldBeDisplayed() {
+
+    assertTrue(
+            "Employee validation message was not displayed",
+            employeePage.isEmployeeValidationMessageDisplayed());
+}
+@When("I open the add employee page")
+public void openAddEmployeePage() {
+
+    employeePage = new EmployeePage();
+
+    employeePage.openPIM();
+    employeePage.openAddEmployee();
+}
+@When("I click the save employee button")
+public void clickSaveEmployeeButton() {
+
+    employeePage.saveEmployee();
+}
+
+
 }

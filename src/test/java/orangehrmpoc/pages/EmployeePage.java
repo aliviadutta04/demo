@@ -1,8 +1,13 @@
 package orangehrmpoc.pages;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.List;
 
 public class EmployeePage extends BasePage {
     private By pimMenu = By.xpath("//span[normalize-space()='PIM']");
@@ -37,6 +42,10 @@ public class EmployeePage extends BasePage {
     private By confirmDeleteButton = By.xpath("//button[normalize-space()='Yes, Delete']");
 
     private By noRecordsMessage = By.xpath("//span[contains(normalize-space(),'No Records Found')]");
+//     @FindBy(xpath = "//span[contains(@class,'oxd-input-field-error-message')]")
+// private List<WebElement> validationMessages;
+private By validationMessage =
+        By.xpath("//span[contains(@class,'oxd-input-field-error-message')]");
 
 
     public void openPIM() {
@@ -57,9 +66,13 @@ public class EmployeePage extends BasePage {
         enterText(lastName, lastNameValue);
     }
 
-    public void saveEmployee() {
-        click(saveButton);
-    }
+   public void saveEmployee() {
+
+    wait.until(
+            org.openqa.selenium.support.ui.ExpectedConditions
+                    .elementToBeClickable(saveButton))
+            .click();
+}
     // public void updateSaveEmployee() {
     //     click(updateSaveButton);
     // }
@@ -132,5 +145,27 @@ public class EmployeePage extends BasePage {
     throw new RuntimeException(
             "Unable to extract empNumber from URL: " + currentUrl
     );
+}
+public boolean isEmployeeCreationFailed() {
+    return isEmployeeValidationMessageDisplayed();
+}
+public boolean isEmployeeValidationMessageDisplayed() {
+
+    try {
+
+        boolean displayed = isDisplayed(validationMessage);
+
+        System.out.println(
+                "Validation message displayed: " + displayed);
+
+        return displayed;
+
+    } catch (Exception e) {
+
+        System.out.println(
+                "Validation message error: " + e.getMessage());
+
+        return false;
+    }
 }
 }

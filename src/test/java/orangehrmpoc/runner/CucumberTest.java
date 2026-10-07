@@ -13,7 +13,7 @@ import org.junit.runner.RunWith;
                 "orangehrmpoc.hooks"
         },
 
-        tags = "@smoke",
+        tags = "@negative",
 
         plugin = {
                 "pretty",
