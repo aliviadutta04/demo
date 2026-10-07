@@ -85,9 +85,20 @@ private By validationMessage =
     }
 
     public void updateLastName(String value) {
-        enterText(lastName, value);
-        click(updateSaveButton);
-    }
+
+    enterText(lastName, value);
+
+    WebElement saveButton = wait.until(
+            org.openqa.selenium.support.ui.ExpectedConditions
+                    .elementToBeClickable(updateSaveButton));
+
+    ((org.openqa.selenium.JavascriptExecutor) driver)
+            .executeScript(
+                    "arguments[0].scrollIntoView({block:'center'});",
+                    saveButton);
+
+    saveButton.click();
+}
 
     public boolean isEmployeeUpdated() {
         return isDisplayed(employeeDetailsHeader);
