@@ -153,7 +153,10 @@ public boolean isEmployeeValidationMessageDisplayed() {
 
     try {
 
-        boolean displayed = isDisplayed(validationMessage);
+        boolean displayed = wait.until(
+                org.openqa.selenium.support.ui.ExpectedConditions
+                        .visibilityOfElementLocated(validationMessage))
+                .isDisplayed();
 
         System.out.println(
                 "Validation message displayed: " + displayed);

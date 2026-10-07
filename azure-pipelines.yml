@@ -21,7 +21,20 @@ steps:
     echo "Selected Cucumber Tag: ${{ parameters.cucumberTag }}"
   displayName: 'Display Selected Tag'
 
+- script: |
+    echo "======================================"
+    echo "SUREFIRE REPORTS"
+    echo "======================================"
 
+    find target/surefire-reports -type f -maxdepth 1 -print
+
+    echo "======================================"
+    echo "TEST REPORT CONTENT"
+    echo "======================================"
+
+    cat target/surefire-reports/*.txt || true
+  condition: succeededOrFailed()
+  displayName: 'Print Surefire Test Results'
 # --------------------------------------------------
 # 2. Setup Java
 # --------------------------------------------------
