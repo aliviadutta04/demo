@@ -1,0 +1,40 @@
+{
+  "employees": [
+    {
+      "testCase": "employee1",
+      "create": {
+        "firstName": "Automation",
+        "middleName": "Test",
+        "lastName": "Employee"
+      },
+      "update": {
+        "lastName": "UpdatedEmployee"
+      },
+      "role": "Admin"
+    },
+    {
+      "testCase": "employee2",
+      "create": {
+        "firstName": "Selenium",
+        "middleName": "BDD",
+        "lastName": "Tester"
+      },
+      "update": {
+        "lastName": "UpdatedTester"
+      },
+      "role": "Admin"
+    },
+    {
+      "testCase": "employee3",
+      "create": {
+        "firstName": "Playwright",
+        "middleName": "API",
+        "lastName": "Engineer"
+      },
+      "update": {
+        "lastName": "UpdatedEngineer"
+      },
+      "role": "Admin"
+    }
+  ]
+}
