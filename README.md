@@ -30,7 +30,6 @@ The framework covers:
 - Gson
 - Maven
 - Azure DevOps
-- k6
 - Git/GitHub
 
 ---
