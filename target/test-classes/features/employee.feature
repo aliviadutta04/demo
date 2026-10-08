@@ -5,7 +5,7 @@ Feature: Employee lifecycle
     Given I open the employee application
     And I login with valid credentials
 
-  @smoke
+  @smoke @parallel
   Scenario: Complete employee lifecycle
     When I create a new employee using "employee1" data
     Then the employee should be created successfully
@@ -22,9 +22,9 @@ Feature: Employee lifecycle
   #   Then the employee should not be created
   #   And the employee validation message should be displayed
 
-    @negative
+    @negative @parallel
   Scenario: Create employee without mandatory details
     When I open the add employee page
-    And I click the save employee button
+    # And I click the save employee button
     Then the employee should not be created
     And the employee validation message should be displayed

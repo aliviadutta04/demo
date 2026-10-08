@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testng-results retried="2" ignored="0" total="4" passed="1" failed="1" skipped="0">
+  <reporter-output>
+  </reporter-output>
+  <suite started-at="2026-10-08T18:23:37 IST" name="Surefire suite" finished-at="2026-10-08T18:25:19 IST" duration-ms="101989">
+    <groups>
+      <group name="cucumber">
+        <method signature="ParallelRunner.runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:orangehrmpoc.runner.ParallelRunner@188715b5]" name="runScenario" class="orangehrmpoc.runner.ParallelRunner"/>
+      </group> <!-- cucumber -->
+    </groups>
+    <test started-at="2026-10-08T18:23:37 IST" name="Surefire test" finished-at="2026-10-08T18:25:19 IST" duration-ms="101989">
+      <class name="orangehrmpoc.runner.ParallelRunner">
+        <test-method is-config="true" signature="setUpClass()[pri:0, instance:orangehrmpoc.runner.ParallelRunner@188715b5]" started-at="2026-10-08T18:23:37 IST" name="setUpClass" finished-at="2026-10-08T18:23:39 IST" duration-ms="1684" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- setUpClass -->
+        <test-method retried="true" signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:orangehrmpoc.runner.ParallelRunner@188715b5]" started-at="2026-10-08T18:23:39 IST" name="runScenario" data-provider="scenarios" finished-at="2026-10-08T18:24:16 IST" duration-ms="36451" status="SKIP">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Create employee without mandatory details"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Employee lifecycle"]]>
+              </value>
+            </param>
+          </params>
+          <exception class="java.lang.AssertionError">
+            <message>
+              <![CDATA[Employee was created even though mandatory fields were missing]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.AssertionError: Employee was created even though mandatory fields were missing
+at org.junit.Assert.fail(Assert.java:89)
+at org.junit.Assert.assertTrue(Assert.java:42)
+at orangehrmpoc.steps.EmployeeSteps.employeeShouldNotBeCreated(EmployeeSteps.java:168)
+at ✽.the employee should not be created(file:///C:/Users/Admin/Downloads/orangehrmdemo-main/src/test/resources/features/employee.feature:29)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.AssertionError -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:orangehrmpoc.runner.ParallelRunner@188715b5]" started-at="2026-10-08T18:23:39 IST" name="runScenario" data-provider="scenarios" finished-at="2026-10-08T18:24:20 IST" duration-ms="40593" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Complete employee lifecycle"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Employee lifecycle"]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method retried="true" signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:orangehrmpoc.runner.ParallelRunner@188715b5]" started-at="2026-10-08T18:24:16 IST" name="runScenario" data-provider="scenarios" finished-at="2026-10-08T18:24:46 IST" duration-ms="29969" status="SKIP">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Create employee without mandatory details"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Employee lifecycle"]]>
+              </value>
+            </param>
+          </params>
+          <exception class="java.lang.AssertionError">
+            <message>
+              <![CDATA[Employee was created even though mandatory fields were missing]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.AssertionError: Employee was created even though mandatory fields were missing
+at org.junit.Assert.fail(Assert.java:89)
+at org.junit.Assert.assertTrue(Assert.java:42)
+at orangehrmpoc.steps.EmployeeSteps.employeeShouldNotBeCreated(EmployeeSteps.java:168)
+at ✽.the employee should not be created(file:///C:/Users/Admin/Downloads/orangehrmdemo-main/src/test/resources/features/employee.feature:29)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.AssertionError -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method signature="runScenario(io.cucumber.testng.PickleWrapper,io.cucumber.testng.FeatureWrapper)[pri:0, instance:orangehrmpoc.runner.ParallelRunner@188715b5]" started-at="2026-10-08T18:24:46 IST" name="runScenario" data-provider="scenarios" finished-at="2026-10-08T18:25:19 IST" duration-ms="33534" status="FAIL">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA["Create employee without mandatory details"]]>
+              </value>
+            </param>
+            <param index="1">
+              <value>
+                <![CDATA["Employee lifecycle"]]>
+              </value>
+            </param>
+          </params>
+          <exception class="java.lang.AssertionError">
+            <message>
+              <![CDATA[Employee was created even though mandatory fields were missing]]>
+            </message>
+            <full-stacktrace>
+              <![CDATA[java.lang.AssertionError: Employee was created even though mandatory fields were missing
+at org.junit.Assert.fail(Assert.java:89)
+at org.junit.Assert.assertTrue(Assert.java:42)
+at orangehrmpoc.steps.EmployeeSteps.employeeShouldNotBeCreated(EmployeeSteps.java:168)
+at ✽.the employee should not be created(file:///C:/Users/Admin/Downloads/orangehrmdemo-main/src/test/resources/features/employee.feature:29)
+]]>
+            </full-stacktrace>
+          </exception> <!-- java.lang.AssertionError -->
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- runScenario -->
+        <test-method is-config="true" signature="tearDownClass()[pri:0, instance:orangehrmpoc.runner.ParallelRunner@188715b5]" started-at="2026-10-08T18:25:19 IST" name="tearDownClass" finished-at="2026-10-08T18:25:19 IST" duration-ms="194" status="PASS">
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- tearDownClass -->
+      </class> <!-- orangehrmpoc.runner.ParallelRunner -->
+    </test> <!-- Surefire test -->
+  </suite> <!-- Surefire suite -->
+</testng-results>

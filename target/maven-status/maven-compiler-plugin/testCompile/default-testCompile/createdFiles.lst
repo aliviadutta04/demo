@@ -4,8 +4,10 @@ orangehrmpoc\api\ApiClient.class
 orangehrmpoc\config\ConfigReader.class
 orangehrmpoc\pages\RolePage.class
 orangehrmpoc\steps\LoginSteps.class
+orangehrmpoc\retry\RetryAnalyzer.class
 orangehrmpoc\pages\DashboardPage.class
 orangehrmpoc\pages\LoginPage.class
+orangehrmpoc\runner\ParallelRunner.class
 orangehrmpoc\api\EmployeeApi.class
 orangehrmpoc\hooks\Hooks.class
 orangehrmpoc\pages\EmployeePage.class

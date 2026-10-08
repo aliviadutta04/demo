@@ -1,0 +1,11 @@
+-------------------------------------------------------------------------------
+Test set: orangehrmpoc.runner.ParallelRunner
+-------------------------------------------------------------------------------
+Tests run: 4, Failures: 1, Errors: 0, Skipped: 2, Time elapsed: 103.8 s <<< FAILURE! -- in orangehrmpoc.runner.ParallelRunner
+orangehrmpoc.runner.ParallelRunner.runScenario["Create employee without mandatory details", "Employee lifecycle"](4) -- Time elapsed: 33.99 s <<< FAILURE!
+java.lang.AssertionError: Employee was created even though mandatory fields were missing
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at orangehrmpoc.steps.EmployeeSteps.employeeShouldNotBeCreated(EmployeeSteps.java:168)
+	at ✽.the employee should not be created(file:///C:/Users/Admin/Downloads/orangehrmdemo-main/src/test/resources/features/employee.feature:29)
+

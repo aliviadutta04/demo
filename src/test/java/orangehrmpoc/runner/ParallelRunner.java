@@ -1,6 +1,5 @@
 package orangehrmpoc.runner;
 
-import io.cucumber.testng.AbstractTestNGCucumberTests;
 import io.cucumber.testng.FeatureWrapper;
 import io.cucumber.testng.PickleWrapper;
 import io.cucumber.testng.TestNGCucumberRunner;
@@ -21,18 +20,18 @@ import orangehrmpoc.retry.RetryAnalyzer;
                 "orangehrmpoc.hooks"
         },
 
-        tags = "@negative",
+        tags = "@parallel",
 
         plugin = {
                 "pretty",
-                "html:target/cucumber-report/CucumberTest.html",
-                "timeline:target/cucumber-report/cucumberTest-timeline"
+                "html:target/cucumber-report/parallel.html",
+                "timeline:target/cucumber-report/parallel-timeline"
         },
 
         monochrome = true,
         publish = false
 )
-public class CucumberTest {
+public class ParallelRunner {
 
     private TestNGCucumberRunner testNGCucumberRunner;
 
@@ -57,7 +56,7 @@ public class CucumberTest {
         );
     }
 
-    @DataProvider
+    @DataProvider(parallel = true)
     public Object[][] scenarios() {
 
         return testNGCucumberRunner.provideScenarios();
