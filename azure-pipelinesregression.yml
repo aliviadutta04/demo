@@ -10,6 +10,7 @@ stages:
 
 # ==================================================
 # STAGE 1 - EMPLOYEE FEATURE
+# @smoke and @negative will run in PARALLEL
 # ==================================================
 
 - stage: EmployeeTests
@@ -37,12 +38,13 @@ stages:
     pool:
       vmImage: 'ubuntu-latest'
 
+
     steps:
 
 
-    # ----------------------------------------------
-    # 1. Display Tag
-    # ----------------------------------------------
+    # ==================================================
+    # 1. DISPLAY CURRENT TAG
+    # ==================================================
 
     - script: |
 
@@ -54,9 +56,9 @@ stages:
       displayName: 'Display Employee Tag'
 
 
-    # ----------------------------------------------
-    # 2. Setup Java
-    # ----------------------------------------------
+    # ==================================================
+    # 2. SETUP JAVA 21
+    # ==================================================
 
     - task: JavaToolInstaller@0
 
@@ -68,21 +70,25 @@ stages:
       displayName: 'Setup Java 21'
 
 
-    # ----------------------------------------------
-    # 3. Verify Java and Maven
-    # ----------------------------------------------
+    # ==================================================
+    # 3. VERIFY JAVA AND MAVEN
+    # ==================================================
 
     - script: |
 
+        echo "Java Version:"
         java -version
+
+        echo ""
+        echo "Maven Version:"
         mvn -version
 
       displayName: 'Verify Java and Maven'
 
 
-    # ----------------------------------------------
-    # 4. Run Employee Tests
-    # ----------------------------------------------
+    # ==================================================
+    # 4. RUN EMPLOYEE TESTS
+    # ==================================================
 
     - script: |
 
@@ -98,9 +104,9 @@ stages:
       displayName: 'Run Employee Tests'
 
 
-    # ----------------------------------------------
-    # 5. Publish JUnit Results
-    # ----------------------------------------------
+    # ==================================================
+    # 5. PUBLISH JUNIT RESULTS
+    # ==================================================
 
     - task: PublishTestResults@2
 
@@ -120,9 +126,29 @@ stages:
       displayName: 'Publish Employee Test Results'
 
 
-    # ----------------------------------------------
-    # 6. Publish HTML Report
-    # ----------------------------------------------
+    # ==================================================
+    # 6. PREPARE CUCUMBER HTML REPORT
+    # ==================================================
+
+    - script: |
+
+        echo "======================================"
+        echo "Preparing Cucumber HTML Report"
+        echo "======================================"
+
+        mkdir -p target/cucumber-report
+
+        echo "Report directory:"
+        ls -la target/cucumber-report
+
+      condition: succeededOrFailed()
+
+      displayName: 'Prepare Cucumber Report'
+
+
+    # ==================================================
+    # 7. PUBLISH CUCUMBER HTML REPORT
+    # ==================================================
 
     - task: PublishBuildArtifacts@1
 
@@ -139,9 +165,34 @@ stages:
       displayName: 'Publish Employee HTML Report'
 
 
-    # ----------------------------------------------
-    # 7. Publish Screenshots
-    # ----------------------------------------------
+    # ==================================================
+    # 8. PREPARE SCREENSHOTS
+    # ==================================================
+
+    - script: |
+
+        echo "======================================"
+        echo "Preparing Screenshots"
+        echo "======================================"
+
+        mkdir -p target/screenshots
+
+        echo ""
+        echo "Screenshot files:"
+        find target/screenshots -type f -print || true
+
+        echo ""
+        echo "Screenshot directory:"
+        ls -la target/screenshots
+
+      condition: succeededOrFailed()
+
+      displayName: 'Prepare Screenshots'
+
+
+    # ==================================================
+    # 9. PUBLISH SCREENSHOTS
+    # ==================================================
 
     - task: PublishBuildArtifacts@1
 
@@ -158,8 +209,10 @@ stages:
       displayName: 'Publish Employee Screenshots'
 
 
+
 # ==================================================
 # STAGE 2 - DATA DRIVEN FEATURE
+# Runs after Employee stage
 # ==================================================
 
 - stage: DataDrivenTests
@@ -179,12 +232,13 @@ stages:
     pool:
       vmImage: 'ubuntu-latest'
 
+
     steps:
 
 
-    # ----------------------------------------------
-    # 1. Display Tag
-    # ----------------------------------------------
+    # ==================================================
+    # 1. DISPLAY DATA DRIVEN TAG
+    # ==================================================
 
     - script: |
 
@@ -196,9 +250,9 @@ stages:
       displayName: 'Display Data Driven Tag'
 
 
-    # ----------------------------------------------
-    # 2. Setup Java
-    # ----------------------------------------------
+    # ==================================================
+    # 2. SETUP JAVA 21
+    # ==================================================
 
     - task: JavaToolInstaller@0
 
@@ -210,21 +264,25 @@ stages:
       displayName: 'Setup Java 21'
 
 
-    # ----------------------------------------------
-    # 3. Verify Java and Maven
-    # ----------------------------------------------
+    # ==================================================
+    # 3. VERIFY JAVA AND MAVEN
+    # ==================================================
 
     - script: |
 
+        echo "Java Version:"
         java -version
+
+        echo ""
+        echo "Maven Version:"
         mvn -version
 
       displayName: 'Verify Java and Maven'
 
 
-    # ----------------------------------------------
-    # 4. Run Data Driven Tests
-    # ----------------------------------------------
+    # ==================================================
+    # 4. RUN DATA DRIVEN TESTS
+    # ==================================================
 
     - script: |
 
@@ -240,9 +298,9 @@ stages:
       displayName: 'Run Data Driven Tests'
 
 
-    # ----------------------------------------------
-    # 5. Publish JUnit Results
-    # ----------------------------------------------
+    # ==================================================
+    # 5. PUBLISH JUNIT RESULTS
+    # ==================================================
 
     - task: PublishTestResults@2
 
@@ -262,9 +320,29 @@ stages:
       displayName: 'Publish Data Driven Results'
 
 
-    # ----------------------------------------------
-    # 6. Publish HTML Report
-    # ----------------------------------------------
+    # ==================================================
+    # 6. PREPARE CUCUMBER HTML REPORT
+    # ==================================================
+
+    - script: |
+
+        echo "======================================"
+        echo "Preparing Cucumber HTML Report"
+        echo "======================================"
+
+        mkdir -p target/cucumber-report
+
+        echo "Report directory:"
+        ls -la target/cucumber-report
+
+      condition: succeededOrFailed()
+
+      displayName: 'Prepare Cucumber Report'
+
+
+    # ==================================================
+    # 7. PUBLISH CUCUMBER HTML REPORT
+    # ==================================================
 
     - task: PublishBuildArtifacts@1
 
@@ -281,9 +359,34 @@ stages:
       displayName: 'Publish Data Driven HTML Report'
 
 
-    # ----------------------------------------------
-    # 7. Publish Screenshots
-    # ----------------------------------------------
+    # ==================================================
+    # 8. PREPARE SCREENSHOTS
+    # ==================================================
+
+    - script: |
+
+        echo "======================================"
+        echo "Preparing Screenshots"
+        echo "======================================"
+
+        mkdir -p target/screenshots
+
+        echo ""
+        echo "Screenshot files:"
+        find target/screenshots -type f -print || true
+
+        echo ""
+        echo "Screenshot directory:"
+        ls -la target/screenshots
+
+      condition: succeededOrFailed()
+
+      displayName: 'Prepare Screenshots'
+
+
+    # ==================================================
+    # 9. PUBLISH SCREENSHOTS
+    # ==================================================
 
     - task: PublishBuildArtifacts@1
 

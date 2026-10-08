@@ -1,5 +1,4 @@
-trigger:
-  - main
+trigger: none
 
 parameters:
 
@@ -7,17 +6,14 @@ parameters:
   displayName: 'Employee Feature Tag'
   type: string
   default: '@smoke'
-
   values:
     - '@smoke'
     - '@negative'
-
 
 - name: dataDrivenTag
   displayName: 'Data Driven Feature Tag'
   type: string
   default: '@dataDriven'
-
   values:
     - '@dataDriven'
     - '@smokeDataDriven'
@@ -44,45 +40,28 @@ stages:
 
     displayName: 'Run Employee Feature'
 
-    strategy:
-
-      matrix:
-
-        Smoke:
-          cucumberTag: '@smoke'
-
-        Negative:
-          cucumberTag: '@negative'
-
-      maxParallel: 2
-
     pool:
       vmImage: 'ubuntu-latest'
 
-
     steps:
 
-    # --------------------------------------------------
+    # ----------------------------------------------
     # 1. Display Selected Tag
-    # --------------------------------------------------
+    # ----------------------------------------------
 
     - script: |
 
         echo "======================================"
         echo "Employee Feature"
-        echo "======================================"
-
-        echo "Running Tag:"
-        echo "$(cucumberTag)"
-
+        echo "Selected Tag: ${{ parameters.employeeTag }}"
         echo "======================================"
 
       displayName: 'Display Employee Tag'
 
 
-    # --------------------------------------------------
+    # ----------------------------------------------
     # 2. Setup Java
-    # --------------------------------------------------
+    # ----------------------------------------------
 
     - task: JavaToolInstaller@0
 
@@ -94,9 +73,9 @@ stages:
       displayName: 'Setup Java 21'
 
 
-    # --------------------------------------------------
+    # ----------------------------------------------
     # 3. Verify Java and Maven
-    # --------------------------------------------------
+    # ----------------------------------------------
 
     - script: |
 
@@ -106,27 +85,25 @@ stages:
       displayName: 'Verify Java and Maven'
 
 
-    # --------------------------------------------------
-    # 4. Run Employee Feature
-    # --------------------------------------------------
+    # ----------------------------------------------
+    # 4. Run Employee Tests
+    # ----------------------------------------------
 
     - script: |
 
-        echo "======================================"
-        echo "Running Employee Feature"
-        echo "Tag: $(cucumberTag)"
-        echo "======================================"
+        echo "Running Employee Tests"
+        echo "Tag: ${{ parameters.employeeTag }}"
 
         mvn clean test \
           -Dheadless=true \
-          "-Dcucumber.filter.tags=$(cucumberTag)"
+          "-Dcucumber.filter.tags=${{ parameters.employeeTag }}"
 
       displayName: 'Run Employee Tests'
 
 
-    # --------------------------------------------------
-    # 5. Publish JUnit Results
-    # --------------------------------------------------
+    # ----------------------------------------------
+    # 5. Publish JUnit
+    # ----------------------------------------------
 
     - task: PublishTestResults@2
 
@@ -141,14 +118,14 @@ stages:
 
         failTaskOnFailedTests: false
 
-        testRunTitle: 'Employee - $(cucumberTag)'
+        testRunTitle: 'Employee - ${{ parameters.employeeTag }}'
 
       displayName: 'Publish Employee Test Results'
 
 
-    # --------------------------------------------------
+    # ----------------------------------------------
     # 6. Publish HTML Report
-    # --------------------------------------------------
+    # ----------------------------------------------
 
     - task: PublishBuildArtifacts@1
 
@@ -158,28 +135,16 @@ stages:
 
         PathtoPublish: 'target/cucumber-report'
 
-        ArtifactName: 'Employee-Report-$(cucumberTag)'
+        ArtifactName: 'Employee-Report-${{ parameters.employeeTag }}'
 
         publishLocation: 'Container'
 
       displayName: 'Publish Employee HTML Report'
 
 
-    # --------------------------------------------------
+    # ----------------------------------------------
     # 7. Publish Screenshots
-    # --------------------------------------------------
-
-    - script: |
-
-        mkdir -p target/screenshots
-
-        echo "Screenshots:"
-        find target/screenshots -type f -print
-
-      condition: succeededOrFailed()
-
-      displayName: 'Prepare Screenshots'
-
+    # ----------------------------------------------
 
     - task: PublishBuildArtifacts@1
 
@@ -189,7 +154,7 @@ stages:
 
         PathtoPublish: 'target/screenshots'
 
-        ArtifactName: 'Employee-Screenshots-$(cucumberTag)'
+        ArtifactName: 'Employee-Screenshots-${{ parameters.employeeTag }}'
 
         publishLocation: 'Container'
 
@@ -217,30 +182,25 @@ stages:
     pool:
       vmImage: 'ubuntu-latest'
 
-
     steps:
 
-    # --------------------------------------------------
-    # 1. Display Selected Tag
-    # --------------------------------------------------
+    # ----------------------------------------------
+    # 1. Display Tag
+    # ----------------------------------------------
 
     - script: |
 
         echo "======================================"
         echo "Data Driven Feature"
-        echo "======================================"
-
-        echo "Selected Tag:"
-        echo "${{ parameters.dataDrivenTag }}"
-
+        echo "Selected Tag: ${{ parameters.dataDrivenTag }}"
         echo "======================================"
 
       displayName: 'Display Data Driven Tag'
 
 
-    # --------------------------------------------------
+    # ----------------------------------------------
     # 2. Setup Java
-    # --------------------------------------------------
+    # ----------------------------------------------
 
     - task: JavaToolInstaller@0
 
@@ -252,9 +212,9 @@ stages:
       displayName: 'Setup Java 21'
 
 
-    # --------------------------------------------------
+    # ----------------------------------------------
     # 3. Verify Java and Maven
-    # --------------------------------------------------
+    # ----------------------------------------------
 
     - script: |
 
@@ -264,17 +224,14 @@ stages:
       displayName: 'Verify Java and Maven'
 
 
-    # --------------------------------------------------
-    # 4. Run Selected Data Driven Tag
-    # --------------------------------------------------
+    # ----------------------------------------------
+    # 4. Run Data Driven Tests
+    # ----------------------------------------------
 
     - script: |
 
-        echo "======================================"
-        echo "Running Data Driven Feature"
-        echo "Tag:"
-        echo "${{ parameters.dataDrivenTag }}"
-        echo "======================================"
+        echo "Running Data Driven Tests"
+        echo "Tag: ${{ parameters.dataDrivenTag }}"
 
         mvn clean test \
           -Dheadless=true \
@@ -283,9 +240,9 @@ stages:
       displayName: 'Run Data Driven Tests'
 
 
-    # --------------------------------------------------
-    # 5. Publish JUnit Results
-    # --------------------------------------------------
+    # ----------------------------------------------
+    # 5. Publish JUnit
+    # ----------------------------------------------
 
     - task: PublishTestResults@2
 
@@ -305,9 +262,9 @@ stages:
       displayName: 'Publish Data Driven Results'
 
 
-    # --------------------------------------------------
-    # 6. Publish HTML Report
-    # --------------------------------------------------
+    # ----------------------------------------------
+    # 6. Publish HTML
+    # ----------------------------------------------
 
     - task: PublishBuildArtifacts@1
 
@@ -324,21 +281,9 @@ stages:
       displayName: 'Publish Data Driven HTML Report'
 
 
-    # --------------------------------------------------
+    # ----------------------------------------------
     # 7. Publish Screenshots
-    # --------------------------------------------------
-
-    - script: |
-
-        mkdir -p target/screenshots
-
-        echo "Screenshots:"
-        find target/screenshots -type f -print
-
-      condition: succeededOrFailed()
-
-      displayName: 'Prepare Screenshots'
-
+    # ----------------------------------------------
 
     - task: PublishBuildArtifacts@1
 
