@@ -165,3 +165,32 @@ steps:
     ArtifactName: 'Failure-Screenshots'
     publishLocation: 'Container'
   displayName: 'Publish Failure Screenshots'
+
+
+# --------------------------------------------------
+# 10. Display Final Test Summary
+# --------------------------------------------------
+
+- script: |
+    echo ""
+    echo "=================================================="
+    echo "           CUCUMBER TEST EXECUTION"
+    echo "=================================================="
+    echo ""
+    echo "Selected Cucumber Tag:"
+    echo "${{ parameters.cucumberTag }}"
+    echo ""
+    echo "Cucumber HTML Report:"
+    echo "target/cucumber-report"
+    echo ""
+    echo "JUnit Report:"
+    echo "target/surefire-reports"
+    echo ""
+    echo "Failure Screenshots:"
+    echo "target/screenshots"
+    echo ""
+    echo "=================================================="
+    echo "       TEST EXECUTION COMPLETED"
+    echo "=================================================="
+  condition: succeededOrFailed()
+  displayName: 'Display Final Test Summary'
