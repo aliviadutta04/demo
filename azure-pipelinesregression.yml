@@ -1,0 +1,300 @@
+trigger: none
+
+
+# ==================================================
+# STAGES
+# ==================================================
+
+stages:
+
+
+# ==================================================
+# STAGE 1 - EMPLOYEE FEATURE
+# ==================================================
+
+- stage: EmployeeTests
+
+  displayName: 'Employee Feature Tests'
+
+  jobs:
+
+  - job: EmployeeFeature
+
+    displayName: 'Employee Tests - Parallel Tags'
+
+    strategy:
+
+      matrix:
+
+        Smoke:
+          cucumberTag: '@smoke'
+
+        Negative:
+          cucumberTag: '@negative'
+
+      maxParallel: 2
+
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+
+
+    # ----------------------------------------------
+    # 1. Display Tag
+    # ----------------------------------------------
+
+    - script: |
+
+        echo "======================================"
+        echo "Employee Feature"
+        echo "Running Tag: $(cucumberTag)"
+        echo "======================================"
+
+      displayName: 'Display Employee Tag'
+
+
+    # ----------------------------------------------
+    # 2. Setup Java
+    # ----------------------------------------------
+
+    - task: JavaToolInstaller@0
+
+      inputs:
+        versionSpec: '21'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+      displayName: 'Setup Java 21'
+
+
+    # ----------------------------------------------
+    # 3. Verify Java and Maven
+    # ----------------------------------------------
+
+    - script: |
+
+        java -version
+        mvn -version
+
+      displayName: 'Verify Java and Maven'
+
+
+    # ----------------------------------------------
+    # 4. Run Employee Tests
+    # ----------------------------------------------
+
+    - script: |
+
+        echo "======================================"
+        echo "Running Employee Tests"
+        echo "Tag: $(cucumberTag)"
+        echo "======================================"
+
+        mvn clean test \
+          -Dheadless=true \
+          "-Dcucumber.filter.tags=$(cucumberTag)"
+
+      displayName: 'Run Employee Tests'
+
+
+    # ----------------------------------------------
+    # 5. Publish JUnit Results
+    # ----------------------------------------------
+
+    - task: PublishTestResults@2
+
+      condition: succeededOrFailed()
+
+      inputs:
+
+        testResultsFormat: 'JUnit'
+
+        testResultsFiles: |
+          **/target/surefire-reports/TEST-*.xml
+
+        failTaskOnFailedTests: false
+
+        testRunTitle: 'Employee - $(cucumberTag)'
+
+      displayName: 'Publish Employee Test Results'
+
+
+    # ----------------------------------------------
+    # 6. Publish HTML Report
+    # ----------------------------------------------
+
+    - task: PublishBuildArtifacts@1
+
+      condition: succeededOrFailed()
+
+      inputs:
+
+        PathtoPublish: 'target/cucumber-report'
+
+        ArtifactName: 'Employee-Report-$(cucumberTag)'
+
+        publishLocation: 'Container'
+
+      displayName: 'Publish Employee HTML Report'
+
+
+    # ----------------------------------------------
+    # 7. Publish Screenshots
+    # ----------------------------------------------
+
+    - task: PublishBuildArtifacts@1
+
+      condition: succeededOrFailed()
+
+      inputs:
+
+        PathtoPublish: 'target/screenshots'
+
+        ArtifactName: 'Employee-Screenshots-$(cucumberTag)'
+
+        publishLocation: 'Container'
+
+      displayName: 'Publish Employee Screenshots'
+
+
+# ==================================================
+# STAGE 2 - DATA DRIVEN FEATURE
+# ==================================================
+
+- stage: DataDrivenTests
+
+  displayName: 'Data Driven Feature Tests'
+
+  dependsOn: EmployeeTests
+
+  condition: succeeded()
+
+  jobs:
+
+  - job: DataDrivenFeature
+
+    displayName: 'Run Data Driven Feature'
+
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+
+
+    # ----------------------------------------------
+    # 1. Display Tag
+    # ----------------------------------------------
+
+    - script: |
+
+        echo "======================================"
+        echo "Data Driven Feature"
+        echo "Running Tag: @dataDriven"
+        echo "======================================"
+
+      displayName: 'Display Data Driven Tag'
+
+
+    # ----------------------------------------------
+    # 2. Setup Java
+    # ----------------------------------------------
+
+    - task: JavaToolInstaller@0
+
+      inputs:
+        versionSpec: '21'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+      displayName: 'Setup Java 21'
+
+
+    # ----------------------------------------------
+    # 3. Verify Java and Maven
+    # ----------------------------------------------
+
+    - script: |
+
+        java -version
+        mvn -version
+
+      displayName: 'Verify Java and Maven'
+
+
+    # ----------------------------------------------
+    # 4. Run Data Driven Tests
+    # ----------------------------------------------
+
+    - script: |
+
+        echo "======================================"
+        echo "Running Data Driven Feature"
+        echo "Tag: @dataDriven"
+        echo "======================================"
+
+        mvn clean test \
+          -Dheadless=true \
+          "-Dcucumber.filter.tags=@dataDriven"
+
+      displayName: 'Run Data Driven Tests'
+
+
+    # ----------------------------------------------
+    # 5. Publish JUnit Results
+    # ----------------------------------------------
+
+    - task: PublishTestResults@2
+
+      condition: succeededOrFailed()
+
+      inputs:
+
+        testResultsFormat: 'JUnit'
+
+        testResultsFiles: |
+          **/target/surefire-reports/TEST-*.xml
+
+        failTaskOnFailedTests: false
+
+        testRunTitle: 'Data Driven - @dataDriven'
+
+      displayName: 'Publish Data Driven Results'
+
+
+    # ----------------------------------------------
+    # 6. Publish HTML Report
+    # ----------------------------------------------
+
+    - task: PublishBuildArtifacts@1
+
+      condition: succeededOrFailed()
+
+      inputs:
+
+        PathtoPublish: 'target/cucumber-report'
+
+        ArtifactName: 'DataDriven-Report'
+
+        publishLocation: 'Container'
+
+      displayName: 'Publish Data Driven HTML Report'
+
+
+    # ----------------------------------------------
+    # 7. Publish Screenshots
+    # ----------------------------------------------
+
+    - task: PublishBuildArtifacts@1
+
+      condition: succeededOrFailed()
+
+      inputs:
+
+        PathtoPublish: 'target/screenshots'
+
+        ArtifactName: 'DataDriven-Screenshots'
+
+        publishLocation: 'Container'
+
+      displayName: 'Publish Data Driven Screenshots'
