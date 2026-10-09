@@ -1,300 +1,167 @@
-trigger: none
+trigger:
+  - main
 
 parameters:
 
-- name: employeeTag
-  displayName: 'Employee Feature Tag'
+- name: cucumberTag
+  displayName: 'Select Cucumber Tag'
   type: string
   default: '@smoke'
   values:
     - '@smoke'
     - '@negative'
-
-- name: dataDrivenTag
-  displayName: 'Data Driven Feature Tag'
-  type: string
-  default: '@dataDriven'
-  values:
+    - '@employee'
     - '@dataDriven'
-    - '@smokeDataDriven'
+    - 'smokeDataDriven'
 
+pool:
+  vmImage: 'ubuntu-latest'
 
-# ==================================================
-# STAGES
-# ==================================================
+steps:
 
-stages:
+# --------------------------------------------------
+# 1. Display selected Cucumber tag
+# --------------------------------------------------
 
+- script: |
+    echo "======================================"
+    echo "Selected Cucumber Tag:"
+    echo "${{ parameters.cucumberTag }}"
+    echo "======================================"
+  displayName: 'Display Selected Tag'
 
-# ==================================================
-# STAGE 1 - EMPLOYEE FEATURE
-# ==================================================
 
-- stage: EmployeeTests
+# --------------------------------------------------
+# 2. Setup Java 21
+# --------------------------------------------------
 
-  displayName: 'Employee Feature Tests'
+- task: JavaToolInstaller@0
+  inputs:
+    versionSpec: '21'
+    jdkArchitectureOption: 'x64'
+    jdkSourceOption: 'PreInstalled'
+  displayName: 'Setup Java 21'
 
-  jobs:
 
-  - job: EmployeeFeature
+# --------------------------------------------------
+# 3. Verify Java and Maven
+# --------------------------------------------------
 
-    displayName: 'Run Employee Feature'
+- script: |
+    java -version
+    mvn -version
+  displayName: 'Verify Java and Maven'
+
+
+# --------------------------------------------------
+# 4. Run Selenium Cucumber Tests
+# --------------------------------------------------
 
-    pool:
-      vmImage: 'ubuntu-latest'
-
-    steps:
-
-    # ----------------------------------------------
-    # 1. Display Selected Tag
-    # ----------------------------------------------
-
-    - script: |
-
-        echo "======================================"
-        echo "Employee Feature"
-        echo "Selected Tag: ${{ parameters.employeeTag }}"
-        echo "======================================"
-
-      displayName: 'Display Employee Tag'
-
-
-    # ----------------------------------------------
-    # 2. Setup Java
-    # ----------------------------------------------
-
-    - task: JavaToolInstaller@0
-
-      inputs:
-        versionSpec: '21'
-        jdkArchitectureOption: 'x64'
-        jdkSourceOption: 'PreInstalled'
-
-      displayName: 'Setup Java 21'
-
-
-    # ----------------------------------------------
-    # 3. Verify Java and Maven
-    # ----------------------------------------------
-
-    - script: |
-
-        java -version
-        mvn -version
-
-      displayName: 'Verify Java and Maven'
-
-
-    # ----------------------------------------------
-    # 4. Run Employee Tests
-    # ----------------------------------------------
-
-    - script: |
-
-        echo "Running Employee Tests"
-        echo "Tag: ${{ parameters.employeeTag }}"
-
-        mvn clean test \
-          -Dheadless=true \
-          "-Dcucumber.filter.tags=${{ parameters.employeeTag }}"
-
-      displayName: 'Run Employee Tests'
-
-
-    # ----------------------------------------------
-    # 5. Publish JUnit
-    # ----------------------------------------------
-
-    - task: PublishTestResults@2
-
-      condition: succeededOrFailed()
-
-      inputs:
-
-        testResultsFormat: 'JUnit'
-
-        testResultsFiles: |
-          **/target/surefire-reports/TEST-*.xml
-
-        failTaskOnFailedTests: false
-
-        testRunTitle: 'Employee - ${{ parameters.employeeTag }}'
-
-      displayName: 'Publish Employee Test Results'
-
-
-    # ----------------------------------------------
-    # 6. Publish HTML Report
-    # ----------------------------------------------
-
-    - task: PublishBuildArtifacts@1
-
-      condition: succeededOrFailed()
-
-      inputs:
-
-        PathtoPublish: 'target/cucumber-report'
-
-        ArtifactName: 'Employee-Report-${{ parameters.employeeTag }}'
-
-        publishLocation: 'Container'
-
-      displayName: 'Publish Employee HTML Report'
-
-
-    # ----------------------------------------------
-    # 7. Publish Screenshots
-    # ----------------------------------------------
-
-    - task: PublishBuildArtifacts@1
-
-      condition: succeededOrFailed()
-
-      inputs:
-
-        PathtoPublish: 'target/screenshots'
-
-        ArtifactName: 'Employee-Screenshots-${{ parameters.employeeTag }}'
-
-        publishLocation: 'Container'
-
-      displayName: 'Publish Employee Screenshots'
-
-
-# ==================================================
-# STAGE 2 - DATA DRIVEN FEATURE
-# ==================================================
-
-- stage: DataDrivenTests
-
-  displayName: 'Data Driven Feature Tests'
-
-  dependsOn: EmployeeTests
-
-  condition: succeeded()
-
-  jobs:
-
-  - job: DataDrivenFeature
-
-    displayName: 'Run Data Driven Feature'
-
-    pool:
-      vmImage: 'ubuntu-latest'
-
-    steps:
-
-    # ----------------------------------------------
-    # 1. Display Tag
-    # ----------------------------------------------
-
-    - script: |
-
-        echo "======================================"
-        echo "Data Driven Feature"
-        echo "Selected Tag: ${{ parameters.dataDrivenTag }}"
-        echo "======================================"
-
-      displayName: 'Display Data Driven Tag'
-
-
-    # ----------------------------------------------
-    # 2. Setup Java
-    # ----------------------------------------------
-
-    - task: JavaToolInstaller@0
-
-      inputs:
-        versionSpec: '21'
-        jdkArchitectureOption: 'x64'
-        jdkSourceOption: 'PreInstalled'
-
-      displayName: 'Setup Java 21'
-
-
-    # ----------------------------------------------
-    # 3. Verify Java and Maven
-    # ----------------------------------------------
-
-    - script: |
-
-        java -version
-        mvn -version
-
-      displayName: 'Verify Java and Maven'
-
-
-    # ----------------------------------------------
-    # 4. Run Data Driven Tests
-    # ----------------------------------------------
-
-    - script: |
-
-        echo "Running Data Driven Tests"
-        echo "Tag: ${{ parameters.dataDrivenTag }}"
-
-        mvn clean test \
-          -Dheadless=true \
-          "-Dcucumber.filter.tags=${{ parameters.dataDrivenTag }}"
-
-      displayName: 'Run Data Driven Tests'
-
-
-    # ----------------------------------------------
-    # 5. Publish JUnit
-    # ----------------------------------------------
-
-    - task: PublishTestResults@2
-
-      condition: succeededOrFailed()
-
-      inputs:
-
-        testResultsFormat: 'JUnit'
-
-        testResultsFiles: |
-          **/target/surefire-reports/TEST-*.xml
-
-        failTaskOnFailedTests: false
-
-        testRunTitle: 'Data Driven - ${{ parameters.dataDrivenTag }}'
-
-      displayName: 'Publish Data Driven Results'
-
-
-    # ----------------------------------------------
-    # 6. Publish HTML
-    # ----------------------------------------------
-
-    - task: PublishBuildArtifacts@1
-
-      condition: succeededOrFailed()
-
-      inputs:
-
-        PathtoPublish: 'target/cucumber-report'
-
-        ArtifactName: 'DataDriven-Report-${{ parameters.dataDrivenTag }}'
-
-        publishLocation: 'Container'
-
-      displayName: 'Publish Data Driven HTML Report'
-
-
-    # ----------------------------------------------
-    # 7. Publish Screenshots
-    # ----------------------------------------------
-
-    - task: PublishBuildArtifacts@1
-
-      condition: succeededOrFailed()
-
-      inputs:
-
-        PathtoPublish: 'target/screenshots'
-
-        ArtifactName: 'DataDriven-Screenshots-${{ parameters.dataDrivenTag }}'
-
-        publishLocation: 'Container'
-
-      displayName: 'Publish Data Driven Screenshots'
+- script: |
+    echo "======================================"
+    echo "Running Selenium Cucumber Tests"
+    echo "Tag: ${{ parameters.cucumberTag }}"
+    echo "======================================"
+
+    mvn clean test \
+      -Dheadless=true \
+      "-Dcucumber.filter.tags=${{ parameters.cucumberTag }}"
+  displayName: 'Run Selenium Cucumber Tests'
+
+
+# --------------------------------------------------
+# 5. Print Surefire Error Details
+# --------------------------------------------------
+
+- script: |
+    echo "======================================"
+    echo "SUREFIRE REPORTS"
+    echo "======================================"
+
+    if [ -d "target/surefire-reports" ]; then
+
+      echo "Surefire files:"
+      find target/surefire-reports -maxdepth 1 -type f -print
+
+      echo ""
+      echo "======================================"
+      echo "SUREFIRE TEST REPORT CONTENT"
+      echo "======================================"
+
+      for file in target/surefire-reports/*.txt; do
+        if [ -f "$file" ]; then
+          echo ""
+          echo "--------------------------------------"
+          echo "File: $file"
+          echo "--------------------------------------"
+          cat "$file"
+        fi
+      done
+
+    else
+
+      echo "No target/surefire-reports directory found."
+
+    fi
+  condition: succeededOrFailed()
+  displayName: 'Print Surefire Test Results'
+
+
+# --------------------------------------------------
+# 6. Publish JUnit Test Results
+# --------------------------------------------------
+
+- task: PublishTestResults@2
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/target/surefire-reports/TEST-*.xml'
+    failTaskOnFailedTests: false
+    testRunTitle: 'OrangeHRM Selenium Cucumber Tests'
+  displayName: 'Publish Test Results'
+
+
+# --------------------------------------------------
+# 7. Publish Cucumber HTML Report
+# --------------------------------------------------
+
+- task: PublishBuildArtifacts@1
+  condition: succeededOrFailed()
+  inputs:
+    PathtoPublish: 'target/cucumber-report'
+    ArtifactName: 'Cucumber-HTML-Report'
+    publishLocation: 'Container'
+  displayName: 'Publish Cucumber HTML Report'
+
+
+# --------------------------------------------------
+# 8. Ensure Screenshot Directory Exists
+# --------------------------------------------------
+
+- script: |
+    echo "Checking screenshot directory..."
+
+    if [ -d "target/screenshots" ]; then
+      echo "Screenshot directory already exists."
+      echo "Files:"
+      find target/screenshots -type f -print
+    else
+      echo "No screenshots were generated."
+      echo "Creating empty screenshot directory..."
+      mkdir -p target/screenshots
+    fi
+  condition: succeededOrFailed()
+  displayName: 'Ensure Screenshot Directory'
+
+
+# --------------------------------------------------
+# 9. Publish Failure Screenshots
+# --------------------------------------------------
+
+- task: PublishBuildArtifacts@1
+  condition: succeededOrFailed()
+  inputs:
+    PathtoPublish: 'target/screenshots'
+    ArtifactName: 'Failure-Screenshots'
+    publishLocation: 'Container'
+  displayName: 'Publish Failure Screenshots'
