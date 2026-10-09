@@ -11,62 +11,60 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import orangehrmpoc.retry.RetryAnalyzer;
+import com.automation.remarks.video.annotations.Video;
+import com.automation.remarks.testng.VideoListener;
+import org.testng.annotations.Listeners;
+import orangehrmpoc.utils.VideoFileManager;
 
-@CucumberOptions(
-        features = "src/test/resources/features",
+@Listeners(VideoListener.class)
+@CucumberOptions(features = "src/test/resources/features",
 
-        glue = {
-                "orangehrmpoc.steps",
-                "orangehrmpoc.hooks"
-        },
+                glue = {
+                                "orangehrmpoc.steps",
+                                "orangehrmpoc.hooks"
+                },
 
-        tags = "@parallel",
+                tags = "@parallel",
 
-        plugin = {
-                "pretty",
-                "html:target/cucumber-report/parallel.html",
-                "timeline:target/cucumber-report/parallel-timeline"
-        },
+                plugin = {
+                                "pretty",
+                                "html:target/cucumber-report/parallel.html",
+                                "timeline:target/cucumber-report/parallel-timeline"
+                },
 
-        monochrome = true,
-        publish = false
-)
+                monochrome = true, publish = false)
 public class ParallelRunner {
 
-    private TestNGCucumberRunner testNGCucumberRunner;
+        private TestNGCucumberRunner testNGCucumberRunner;
 
-    @BeforeClass(alwaysRun = true)
-    public void setUpClass() {
+        @BeforeClass(alwaysRun = true)
+        public void setUpClass() {
 
-        testNGCucumberRunner =
-                new TestNGCucumberRunner(this.getClass());
-    }
-
-    @Test(
-            groups = "cucumber",
-            dataProvider = "scenarios",
-            retryAnalyzer = RetryAnalyzer.class
-    )
-    public void runScenario(
-            PickleWrapper pickleWrapper,
-            FeatureWrapper featureWrapper) {
-
-        testNGCucumberRunner.runScenario(
-                pickleWrapper.getPickle()
-        );
-    }
-
-    @DataProvider(parallel = true)
-    public Object[][] scenarios() {
-
-        return testNGCucumberRunner.provideScenarios();
-    }
-
-    @AfterClass(alwaysRun = true)
-    public void tearDownClass() {
-
-        if (testNGCucumberRunner != null) {
-            testNGCucumberRunner.finish();
+                testNGCucumberRunner = new TestNGCucumberRunner(this.getClass());
         }
-    }
+
+        @Test(groups = "cucumber", dataProvider = "scenarios", retryAnalyzer = RetryAnalyzer.class)
+        @Video
+        public void runScenario(
+                        PickleWrapper pickleWrapper,
+                        FeatureWrapper featureWrapper) {
+
+                testNGCucumberRunner.runScenario(
+                                pickleWrapper.getPickle());
+        }
+
+        @DataProvider(parallel = true)
+        public Object[][] scenarios() {
+
+                return testNGCucumberRunner.provideScenarios();
+        }
+
+        @AfterClass(alwaysRun = true)
+        public void tearDownClass() {
+                if (testNGCucumberRunner != null) {
+                        testNGCucumberRunner.finish();
+                }
+
+                VideoFileManager.keepLatestVideo();
+        }
 }
