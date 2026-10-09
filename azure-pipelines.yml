@@ -12,7 +12,7 @@ parameters:
     - '@negative'
     - '@employee'
     - '@dataDriven'
-    - 'smokeDataDriven'
+    - '@smokeDataDriven'
 
 pool:
   vmImage: 'ubuntu-latest'
