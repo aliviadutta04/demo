@@ -1,6 +1,5 @@
 package orangehrmpoc.runner;
 
-import io.cucumber.testng.AbstractTestNGCucumberTests;
 import io.cucumber.testng.FeatureWrapper;
 import io.cucumber.testng.PickleWrapper;
 import io.cucumber.testng.TestNGCucumberRunner;
@@ -10,15 +9,11 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import com.automation.remarks.video.annotations.Video;
-import com.automation.remarks.testng.VideoListener;
-import org.testng.annotations.Listeners;
 import orangehrmpoc.utils.VideoFileManager;
 
 
 import orangehrmpoc.retry.RetryAnalyzer;
 
-@Listeners(VideoListener.class)
 @CucumberOptions(features = "src/test/resources/features",
 
                 glue = {
@@ -26,7 +21,7 @@ import orangehrmpoc.retry.RetryAnalyzer;
                                 "orangehrmpoc.hooks"
                 },
 
-                tags = "@negative",
+                tags = "@loginNegative",
 
                 plugin = {
                                 "pretty",
@@ -37,15 +32,15 @@ import orangehrmpoc.retry.RetryAnalyzer;
                 monochrome = true, publish = false)
 public class CucumberTest {
 
+        private static final String ENVIRONMENT = "dev";
         private TestNGCucumberRunner testNGCucumberRunner;
 
         @BeforeClass(alwaysRun = true)
         public void setUpClass() {
-
+                System.setProperty("env", System.getProperty("env", ENVIRONMENT));
                 testNGCucumberRunner = new TestNGCucumberRunner(this.getClass());
         }
 
-        @Video
         @Test(groups = "cucumber", dataProvider = "scenarios", retryAnalyzer = RetryAnalyzer.class)
 
         public void runScenario(
@@ -56,7 +51,7 @@ public class CucumberTest {
                                 pickleWrapper.getPickle());
         }
 
-        @DataProvider
+        @DataProvider(parallel = false)
         public Object[][] scenarios() {
 
                 return testNGCucumberRunner.provideScenarios();

@@ -2,9 +2,14 @@ package orangehrmpoc.driver;
 
 import orangehrmpoc.config.ConfigReader;
 
+import java.util.Locale;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.edge.EdgeDriver;
+import org.openqa.selenium.edge.EdgeOptions;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
 
 public class DriverFactory {
 
@@ -19,32 +24,44 @@ public class DriverFactory {
                 Boolean.parseBoolean(
                         ConfigReader.get("headless"));
 
-        if (browser.equalsIgnoreCase("chrome")) {
+        WebDriver webDriver = switch (browser.trim().toLowerCase(Locale.ROOT)) {
+            case "chrome" -> new ChromeDriver(chromeOptions(headless));
+            case "firefox" -> new FirefoxDriver(firefoxOptions(headless));
+            case "edge" -> new EdgeDriver(edgeOptions(headless));
+            default -> throw new IllegalArgumentException(
+                    "Unsupported browser: " + browser + ". Supported browsers: chrome, firefox, edge");
+        };
+        driver.set(webDriver);
+    }
 
-            ChromeOptions options = new ChromeOptions();
-
-            // Headless execution for Azure pipeline
-            if (headless) {
-                options.addArguments("--headless=new");
-            }
-
-            // Required/recommended for Linux CI environment
-            options.addArguments("--no-sandbox");
-            options.addArguments("--disable-dev-shm-usage");
-
-            // Fixed browser size
-            options.addArguments("--window-size=1920,1080");
-
-            // Disable browser notifications
-            options.addArguments("--disable-notifications");
-
-            driver.set(new ChromeDriver(options));
+    private static ChromeOptions chromeOptions(boolean headless) {
+        ChromeOptions options = new ChromeOptions();
+        if (headless) {
+            options.addArguments("--headless=new");
         }
+        options.addArguments("--no-sandbox", "--disable-dev-shm-usage", "--window-size=1920,1080",
+                "--disable-notifications");
+        return options;
+    }
 
-        else {
-            throw new RuntimeException(
-                    "Browser not supported: " + browser);
+    private static FirefoxOptions firefoxOptions(boolean headless) {
+        FirefoxOptions options = new FirefoxOptions();
+        if (headless) {
+            options.addArguments("-headless");
         }
+        options.addArguments("--width=1920", "--height=1080");
+        options.addPreference("dom.webnotifications.enabled", false);
+        return options;
+    }
+
+    private static EdgeOptions edgeOptions(boolean headless) {
+        EdgeOptions options = new EdgeOptions();
+        if (headless) {
+            options.addArguments("--headless=new");
+        }
+        options.addArguments("--no-sandbox", "--disable-dev-shm-usage", "--window-size=1920,1080",
+                "--disable-notifications");
+        return options;
     }
 
     public static WebDriver getDriver() {
@@ -55,6 +72,10 @@ public class DriverFactory {
         }
 
         return driver.get();
+    }
+
+    public static boolean isInitialized() {
+        return driver.get() != null;
     }
 
     public static void quitDriver() {

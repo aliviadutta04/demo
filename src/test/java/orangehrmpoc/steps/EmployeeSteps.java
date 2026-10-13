@@ -12,15 +12,19 @@ import orangehrmpoc.pages.EmployeePage;
 import orangehrmpoc.pages.RolePage;
 import orangehrmpoc.utils.JsonDataReader;
 import orangehrmpoc.api.EmployeeApi;
+import orangehrmpoc.utils.TestContext;
+import orangehrmpoc.utils.TestDataGenerator;
 import io.restassured.response.Response;
-import static org.junit.Assert.assertEquals;
 
 public class EmployeeSteps {
+    private final TestContext context;
     private DashboardPage dashboardPage;
     private String currentTestCase;
     private EmployeePage employeePage;
-    private String employeeId;
-    private String employeeNumber;
+
+    public EmployeeSteps(TestContext context) {
+        this.context = context;
+    }
 
     @Then("the employee dashboard should be displayed")
     public void employeeDashboardShouldBeDisplayed() {
@@ -41,22 +45,27 @@ public void createNewEmployee(String testCase) {
     JsonObject employee = JsonDataReader.getEmployee(testCase);
 
     JsonObject createData = employee.getAsJsonObject("create");
+    context.firstName = TestDataGenerator.uniqueValue(createData.get("firstName").getAsString());
+    String lastName = TestDataGenerator.uniqueValue(createData.get("lastName").getAsString());
 
     employeePage.openPIM();
     employeePage.openAddEmployee();
 
     employeePage.enterEmployeeDetails(
-            createData.get("firstName").getAsString(),
+            context.firstName,
             createData.get("middleName").getAsString(),
-            createData.get("lastName").getAsString());
+            lastName);
 
+    context.employeeId = employeePage.getEmployeeId();
+    if (context.employeeId.length() > 10) {
+        throw new IllegalStateException("Generated employee ID exceeds 10 characters");
+    }
     employeePage.saveEmployee();
-
-    employeeId = employeePage.getEmployeeId();
-    employeeNumber = employeePage.getEmployeeNumberFromUrl();
-
-    System.out.println("UI Employee ID : " + employeeId);
-    System.out.println("API empNumber  : " + employeeNumber);
+    if (!employeePage.isEmployeeCreated()) {
+        throw new IllegalStateException("Employee creation did not reach the details page");
+    }
+            context.employeeCreationAttempted = true;
+    context.employeeNumber = employeePage.getEmployeeNumberFromUrl();
 }
 
     @Then("the employee should be created successfully")
@@ -74,9 +83,8 @@ public void createNewEmployee(String testCase) {
 
         JsonObject updateData = employee.getAsJsonObject("update");
 
-        String updatedLastName = updateData.get("lastName").getAsString();
-
-        employeePage.updateLastName(updatedLastName);
+        context.updatedLastName = TestDataGenerator.uniqueValue(updateData.get("lastName").getAsString());
+        employeePage.updateLastName(context.updatedLastName);
     }
 
     @Then("the employee details should be updated successfully")
@@ -84,7 +92,7 @@ public void createNewEmployee(String testCase) {
 
         assertTrue(
                 "Employee details were not updated",
-                employeePage.isEmployeeUpdated());
+                employeePage.isLastName(context.updatedLastName));
     }
 
     @Then("the employee role should be validated")
@@ -96,43 +104,41 @@ public void createNewEmployee(String testCase) {
 
         RolePage rolePage = new RolePage();
 
-        if (expectedRole.equalsIgnoreCase("Admin")) {
+        assertEquals("Role has no implemented access assertions", "Admin", expectedRole);
+        assertTrue("Admin role does not have access to Admin menu", rolePage.isAdminMenuDisplayed());
+        assertTrue("Admin role does not have access to PIM", rolePage.isPIMDisplayed());
+    }
 
-            assertTrue(
-                    "Admin role does not have access to Admin menu",
-                    rolePage.isAdminMenuDisplayed());
-
-            assertTrue(
-                    "Admin role does not have access to PIM",
-                    rolePage.isPIMDisplayed());
-        }
+    @Then("the ESS user should see only ESS navigation")
+    public void essUserShouldSeeOnlyEssNavigation() {
+        RolePage rolePage = new RolePage();
+        assertTrue("ESS role should see My Info", rolePage.isMyInfoDisplayed());
+        assertTrue("ESS role must not see Admin", rolePage.isAdminMenuAbsent());
+        assertTrue("ESS role must not see PIM", rolePage.isPIMMenuAbsent());
     }
 
     @Then("the employee should be verified through API")
     public void verifyEmployeeThroughApi() {
 
-        System.out.println(
-                "empNumber used for API: " + employeeNumber);
-
-        EmployeeApi employeeApi = new EmployeeApi();
-
-        Response response = employeeApi.getEmployee(employeeNumber);
-
-        System.out.println("========== API RESPONSE ==========");
-        System.out.println("Status Code : " + response.statusCode());
-        System.out.println("Response    : " + response.asPrettyString());
-        System.out.println("===================================");
+        EmployeeApi employeeApi = new EmployeeApi(context.adminCookies);
+        Response response = employeeApi.getEmployee(context.employeeNumber);
 
         assertEquals(
                 "Unexpected API status code",
                 200,
                 response.statusCode());
+            assertEquals("API employee number did not match", context.employeeNumber,
+                response.jsonPath().getString("data.empNumber"));
+            assertEquals("API first name did not match", context.firstName,
+                response.jsonPath().getString("data.firstName"));
+            assertEquals("API updated last name did not match", context.updatedLastName,
+                response.jsonPath().getString("data.lastName"));
     }
 
     @When("I delete the employee")
     public void deleteEmployee() {
 
-        employeePage.deleteEmployee(employeeId);
+        employeePage.deleteEmployee(context.employeeId);
     }
 
     @Then("the employee should be deleted successfully")
@@ -141,6 +147,9 @@ public void createNewEmployee(String testCase) {
         assertTrue(
                 "Employee was not deleted successfully",
                 employeePage.isEmployeeDeleted());
+            context.employeeNumber = null;
+            context.employeeId = null;
+            context.employeeCreationAttempted = false;
     }
    @When("I try to create an employee using {string} data")
 public void tryToCreateEmployee(String testCase) {

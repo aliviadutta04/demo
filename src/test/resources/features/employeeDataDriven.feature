@@ -12,6 +12,7 @@ Feature: Employee lifecycle using multiple employee data
     And the employee role should be validated
     When I update the employee details
     Then the employee details should be updated successfully
+    And the employee should be verified through API
 
     Examples:
       | testCase  |

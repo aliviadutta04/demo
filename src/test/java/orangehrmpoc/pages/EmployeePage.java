@@ -1,35 +1,23 @@
 package orangehrmpoc.pages;
 
+import orangehrmpoc.config.ConfigReader;
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.FindBy;
-
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.List;
 
 public class EmployeePage extends BasePage {
-    private By pimMenu = By.xpath("//span[normalize-space()='PIM']");
-
-    private By addEmployee = By.xpath("//a[normalize-space()='Add Employee']");
-
     private By firstName = By.name("firstName");
 
     private By middleName = By.name("middleName");
 
     private By lastName = By.name("lastName");
 
-    private By employeeId = By.xpath("//label[normalize-space()='Employee Id']/../following-sibling::div/input");
-
-    private By saveButton = By.xpath("//button[normalize-space()='Save']");
+    private By saveButton = By.cssSelector("button[type='submit']");
     private By updateSaveButton = By.xpath("//div[@class='orangehrm-horizontal-padding orangehrm-vertical-padding']//button[@type='submit'][normalize-space()='Save']");
     private By employeeDetailsHeader = By.xpath("//h6[normalize-space()='Personal Details']");
 
     private By apiEmployeeId = By
             .xpath("//label[normalize-space()='Employee Id']/ancestor::div[contains(@class,'oxd-input-group')]//input");
-    private By employeeList = By.xpath("//a[normalize-space()='Employee List']");
-
     private By employeeIdSearch = By.xpath("//label[normalize-space()='Employee Id']/../following-sibling::div//input");
 
     private By searchButton = By.xpath("//button[normalize-space()='Search']");
@@ -39,82 +27,55 @@ public class EmployeePage extends BasePage {
 
     // private By deleteButton = By.xpath("//button[contains(@class,'oxd-button') and normalize-space()='Delete']");
 
-    private By confirmDeleteButton = By.xpath("//button[normalize-space()='Yes, Delete']");
+            private By confirmDeleteButton = By.cssSelector(
+                ".oxd-dialog-container-default button.oxd-button--label-danger");
 
     private By noRecordsMessage = By.xpath("//span[contains(normalize-space(),'No Records Found')]");
 //     @FindBy(xpath = "//span[contains(@class,'oxd-input-field-error-message')]")
 // private List<WebElement> validationMessages;
 private By validationMessage =
         By.xpath("//span[contains(@class,'oxd-input-field-error-message')]");
-        private By employeeCheckbox = By
-            .xpath("(//div[@role='row']//input[@type='checkbox'])[last()]/following-sibling::*[1]");
-    private By deleteButton = By.xpath("(//div[@role='row']//button[@type='button'])[last()]");
-
-
     public void openPIM() {
-        click(pimMenu);
+        click(PIM_MENU);
     }
 
     public void openAddEmployee() {
-        click(addEmployee);
+        navigateTo(ConfigReader.get("apiBaseUrl") + "/pim/addEmployee");
     }
 
     public void enterEmployeeDetails(
             String firstNameValue,
             String middleNameValue,
             String lastNameValue) {
-
         enterText(firstName, firstNameValue);
         enterText(middleName, middleNameValue);
         enterText(lastName, lastNameValue);
     }
 
-   public void saveEmployee() {
-
-    wait.until(
-            org.openqa.selenium.support.ui.ExpectedConditions
-                    .elementToBeClickable(saveButton))
-            .click();
-}
-    // public void updateSaveEmployee() {
-    //     click(updateSaveButton);
-    // }
+    public void saveEmployee() {
+        click(saveButton);
+    }
 
     public boolean isEmployeeCreated() {
         return isDisplayed(employeeDetailsHeader);
     }
 
     public void updateLastName(String value) {
+        waitForFormLoaderToDisappear();
+        enterText(lastName, value);
+        clickWithJavascriptFallback(updateSaveButton);
+    }
 
-    enterText(lastName, value);
-
-    WebElement saveButton = wait.until(
-            org.openqa.selenium.support.ui.ExpectedConditions
-                    .elementToBeClickable(updateSaveButton));
-
-    ((org.openqa.selenium.JavascriptExecutor) driver)
-            .executeScript(
-                    "arguments[0].scrollIntoView({block:'center'});",
-                    saveButton);
-
-    saveButton.click();
-}
-
-    public boolean isEmployeeUpdated() {
-        return isDisplayed(employeeDetailsHeader);
+    public boolean isLastName(String expectedLastName) {
+        return hasAttributeValue(lastName, "value", expectedLastName);
     }
 
     public String getEmployeeId() {
-
-        return wait.until(
-                org.openqa.selenium.support.ui.ExpectedConditions
-                        .visibilityOfElementLocated(apiEmployeeId))
-                .getAttribute("value");
+        return getAttribute(apiEmployeeId, "value");
     }
 
     public void openEmployeeList() {
-
-        click(employeeList);
+        navigateTo(ConfigReader.get("apiBaseUrl") + "/pim/viewEmployeeList");
     }
 
     public void searchEmployee(String employeeIdValue) {
@@ -130,11 +91,14 @@ private By validationMessage =
 
         searchEmployee(employeeIdValue);
 
-        click(employeeCheckbox);
+        String employeeRow = "//div[@role='row'][.//div[normalize-space()='" + employeeIdValue + "']]";
+        click(By.xpath(employeeRow + "//input[@type='checkbox']/following-sibling::*[1]"));
 
-        click(deleteButton);
+        click(By.xpath(employeeRow
+            + "//button[contains(@class,'oxd-icon-button')][.//i[contains(@class,'bi-trash')]]"));
 
-        click(confirmDeleteButton);
+        clickWithJavascriptFallback(confirmDeleteButton);
+        waitUntilInvisible(By.xpath(employeeRow));
     }
 
     public boolean isEmployeeDeleted() {
@@ -143,11 +107,7 @@ private By validationMessage =
     }
     public String getEmployeeNumberFromUrl() {
 
-    wait.until(driver ->
-            driver.getCurrentUrl().contains("/empNumber/")
-    );
-
-    String currentUrl = driver.getCurrentUrl();
+        String currentUrl = waitForUrlContains("/empNumber/");
 
     Pattern pattern = Pattern.compile("/empNumber/(\\d+)");
     Matcher matcher = pattern.matcher(currentUrl);
@@ -160,29 +120,8 @@ private By validationMessage =
             "Unable to extract empNumber from URL: " + currentUrl
     );
 }
-public boolean isEmployeeCreationFailed() {
-    return isEmployeeValidationMessageDisplayed();
-}
 public boolean isEmployeeValidationMessageDisplayed() {
 
-    try {
-
-        boolean displayed = wait.until(
-                org.openqa.selenium.support.ui.ExpectedConditions
-                        .visibilityOfElementLocated(validationMessage))
-                .isDisplayed();
-
-        System.out.println(
-                "Validation message displayed: " + displayed);
-
-        return displayed;
-
-    } catch (Exception e) {
-
-        System.out.println(
-                "Validation message error: " + e.getMessage());
-
-        return false;
-    }
+    return isDisplayed(validationMessage);
 }
 }

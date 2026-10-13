@@ -10,9 +10,9 @@ import com.google.gson.JsonParser;
 public class JsonDataReader {
     private static final String FILE_PATH =
             "/testdata/employeeData.json";
+        private static final JsonObject TEST_DATA = loadJsonObject();
 
-    private static JsonObject getJsonObject() {
-
+        private static JsonObject loadJsonObject() {
         InputStream inputStream =
                 JsonDataReader.class
                         .getResourceAsStream(FILE_PATH);
@@ -27,21 +27,18 @@ public class JsonDataReader {
                              inputStream,
                              StandardCharsets.UTF_8)) {
 
-            return JsonParser.parseReader(reader)
-                    .getAsJsonObject();
+            return JsonParser.parseReader(reader).getAsJsonObject();
 
         } catch (Exception e) {
             throw new RuntimeException(
-                    "Unable to read test data file", e);
+                    "Unable to read test data file: " + FILE_PATH, e);
         }
     }
 
     public static JsonObject getEmployee(String testCase) {
 
-        JsonObject root = getJsonObject();
-
         for (var employee :
-                root.getAsJsonArray("employees")) {
+                TEST_DATA.getAsJsonArray("employees")) {
 
             JsonObject employeeObject =
                     employee.getAsJsonObject();
@@ -51,7 +48,7 @@ public class JsonDataReader {
                     .getAsString()
                     .equalsIgnoreCase(testCase)) {
 
-                return employeeObject;
+                return employeeObject.deepCopy();
             }
         }
 

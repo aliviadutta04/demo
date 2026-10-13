@@ -16,6 +16,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
+        <cucumber.threads>3</cucumber.threads>
     </properties>
 
     <dependencies>
@@ -24,7 +25,7 @@
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
-            <version>4.49.0</version>
+            <version>4.51.0</version>
         </dependency>
 
         <!-- Cucumber Java -->
@@ -41,11 +42,25 @@
             <version>7.34.9</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-picocontainer</artifactId>
+            <version>7.34.9</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- TestNG -->
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>7.11.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.16</version>
             <scope>test</scope>
         </dependency>
 
@@ -70,10 +85,10 @@
             <artifactId>rest-assured</artifactId>
             <version>5.5.6</version>
         </dependency>
-        <!-- Selenium TestNG Video Recorder -->
+        <!-- Scenario-scoped video recording and Cucumber report attachments -->
         <dependency>
             <groupId>com.automation-remarks</groupId>
-            <artifactId>video-recorder-testng</artifactId>
+            <artifactId>video-recorder-core</artifactId>
             <version>2.0</version>
         </dependency>
     </dependencies>
@@ -147,12 +162,9 @@
                     <properties>
                         <property>
                             <name>dataproviderthreadcount</name>
-                            <value>3</value>
+                            <value>${cucumber.threads}</value>
                         </property>
                     </properties>
-
-                    <!-- Retry failed tests twice -->
-                    <rerunFailingTestsCount>2</rerunFailingTestsCount>
 
                 </configuration>
 

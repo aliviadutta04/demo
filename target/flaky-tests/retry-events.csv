@@ -1,0 +1,4 @@
+timestamp,scenario,attempt,maxRetries,outcome
+"2026-10-13T16:18:49.817342400Z","Complete employee lifecycle",1,2,retrying
+"2026-10-13T16:19:03.561493100Z","Complete employee lifecycle",2,2,retrying
+"2026-10-13T16:19:17.123443200Z","Complete employee lifecycle",3,2,exhausted

@@ -4,73 +4,32 @@ package orangehrmpoc.utils;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.Comparator;
-import java.util.List;
 import java.util.stream.Stream;
+import java.util.logging.Logger;
+
+import orangehrmpoc.config.ConfigReader;
 
 public class VideoFileManager {
+    private static final Logger LOGGER = Logger.getLogger(VideoFileManager.class.getName());
 
     public static void keepLatestVideo() {
-
- 
-        Path sourceFolder = Path.of("video");
-
-
-        Path targetFolder = Path.of("target", "videos");
-
-        Path finalVideo = targetFolder.resolve("runScenario_recording.avi");
-
+        Path videoFolder = Path.of(ConfigReader.get("video.folder"));
         try {
-            if (!Files.exists(sourceFolder)) {
-                System.out.println("Source video folder not found: " + sourceFolder);
-                return;
-            }
-
-            List<Path> videos;
-
-            try (Stream<Path> files = Files.list(sourceFolder)) {
-                videos = files
+            Files.createDirectories(videoFolder);
+            long recordingCount;
+            try (Stream<Path> files = Files.list(videoFolder)) {
+                recordingCount = files
                         .filter(Files::isRegularFile)
-                        .filter(path -> {
-                            String name = path.getFileName().toString();
-
-                            return name.startsWith("runScenario_recording_")
-                                    && name.endsWith(".avi");
-                        })
-                        .sorted(Comparator.comparingLong(
-                                path -> path.toFile().lastModified()))
-                        .toList();
+                        .filter(path -> path.getFileName().toString().endsWith(".avi"))
+                        .count();
             }
-
-            if (videos.isEmpty()) {
-                System.out.println("No recording found in video folder.");
-                return;
+            if (recordingCount == 0) {
+                LOGGER.warning("No video recordings were created in " + videoFolder);
+            } else {
+                LOGGER.info("Preserved " + recordingCount + " video recording(s) in " + videoFolder);
             }
-
-      
-            Path latestVideo = videos.get(videos.size() - 1);
-
-            Files.createDirectories(targetFolder);
-
-           
-            Files.move(
-                    latestVideo,
-                    finalVideo,
-                    StandardCopyOption.REPLACE_EXISTING
-            );
-
- 
-            for (Path video : videos) {
-                if (!video.equals(latestVideo)) {
-                    Files.deleteIfExists(video);
-                }
-            }
-
-            System.out.println("Video saved successfully: " + finalVideo);
-
         } catch (IOException e) {
-            throw new RuntimeException("Unable to manage video files", e);
+            throw new IllegalStateException("Unable to inspect video recordings", e);
         }
     }
 }

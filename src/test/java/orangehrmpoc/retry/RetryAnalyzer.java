@@ -1,40 +1,84 @@
 package orangehrmpoc.retry;
 
+import io.cucumber.testng.PickleWrapper;
+import orangehrmpoc.config.MissingConfigurationException;
 import org.testng.IRetryAnalyzer;
 import org.testng.ITestResult;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.Instant;
+import java.util.logging.Logger;
 
 public class RetryAnalyzer implements IRetryAnalyzer {
-
+    private static final Logger LOGGER = Logger.getLogger(RetryAnalyzer.class.getName());
+    private static final Path RETRY_REPORT = Path.of("target", "flaky-tests", "retry-events.csv");
     private int retryCount = 0;
-
-    private static final int MAX_RETRY_COUNT = 2;
+    private static final int MAX_RETRY_COUNT = Integer.getInteger("retry.maxAttempts", 2);
 
     @Override
     public boolean retry(ITestResult result) {
+        if (hasMissingConfigurationCause(result.getThrowable())) {
+            LOGGER.severe("Not retrying scenario with missing configuration: " + result.getName());
+            return false;
+        }
 
-        if (retryCount < MAX_RETRY_COUNT) {
+        boolean willRetry = retryCount < MAX_RETRY_COUNT;
+        int attempt = retryCount + 1;
+        recordFailure(result, attempt, willRetry);
 
+        if (willRetry) {
             retryCount++;
-
-            System.out.println("======================================");
-            System.out.println("RETRYING FAILED CUCUMBER SCENARIO");
-            System.out.println("Scenario: " + result.getName());
-            System.out.println(
-                    "Retry attempt: "
-                            + retryCount
-                            + " of "
-                            + MAX_RETRY_COUNT
-            );
-            System.out.println("======================================");
-
+            LOGGER.warning("Retrying failed scenario " + scenarioName(result) + " (attempt "
+                    + retryCount + " of " + MAX_RETRY_COUNT + ")");
             return true;
         }
 
-        System.out.println("======================================");
-        System.out.println("MAX RETRIES REACHED");
-        System.out.println("Scenario: " + result.getName());
-        System.out.println("======================================");
+        LOGGER.severe("Retry limit reached for scenario " + scenarioName(result));
+        return false;
+    }
 
+    private static synchronized void recordFailure(ITestResult result, int attempt, boolean willRetry) {
+        try {
+            Files.createDirectories(RETRY_REPORT.getParent());
+            if (Files.notExists(RETRY_REPORT)) {
+                Files.writeString(RETRY_REPORT,
+                        "timestamp,scenario,attempt,maxRetries,outcome" + System.lineSeparator(),
+                        StandardOpenOption.CREATE_NEW);
+            }
+            String row = csv(Instant.now().toString()) + ","
+                    + csv(scenarioName(result)) + ","
+                    + attempt + ","
+                    + MAX_RETRY_COUNT + ","
+                    + (willRetry ? "retrying" : "exhausted")
+                    + System.lineSeparator();
+            Files.writeString(RETRY_REPORT, row, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            LOGGER.warning("Unable to record flaky-test event: " + e.getMessage());
+        }
+    }
+
+    private static String scenarioName(ITestResult result) {
+        for (Object parameter : result.getParameters()) {
+            if (parameter instanceof PickleWrapper pickleWrapper) {
+                return pickleWrapper.getPickle().getName();
+            }
+        }
+        return result.getName();
+    }
+
+    private static String csv(String value) {
+        return "\"" + value.replace("\"", "\"\"") + "\"";
+    }
+
+    private boolean hasMissingConfigurationCause(Throwable failure) {
+        while (failure != null) {
+            if (failure instanceof MissingConfigurationException) {
+                return true;
+            }
+            failure = failure.getCause();
+        }
         return false;
     }
 }

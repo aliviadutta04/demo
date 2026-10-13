@@ -1,20 +1,27 @@
 package orangehrmpoc.api;
 
 import io.restassured.response.Response;
+import org.openqa.selenium.Cookie;
+import java.util.Collection;
 
 public class EmployeeApi {
-    public Response getEmployee(String empNumber) {
+    private final ApiClient apiClient;
 
-        Response response = ApiClient
+    public EmployeeApi(Collection<Cookie> cookies) {
+        apiClient = new ApiClient(cookies);
+    }
+
+    public Response getEmployee(String empNumber) {
+        return apiClient
                 .getAuthenticatedRequest()
                 .when()
                 .get("/api/v2/pim/employees/" + empNumber);
+    }
 
-        System.out.println("========== API RESPONSE ==========");
-        System.out.println("Status Code : " + response.statusCode());
-        System.out.println("Response    : " + response.asPrettyString());
-        System.out.println("===================================");
-
-        return response;
+    public Response deleteEmployee(String empNumber) {
+        return apiClient
+                .getAuthenticatedRequest()
+                .when()
+                .delete("/api/v2/pim/employees/" + empNumber);
     }
 }

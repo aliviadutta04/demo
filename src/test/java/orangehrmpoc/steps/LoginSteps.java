@@ -2,10 +2,22 @@ package orangehrmpoc.steps;
 import orangehrmpoc.config.ConfigReader;
 import orangehrmpoc.driver.DriverFactory;
 import orangehrmpoc.pages.LoginPage;
+import orangehrmpoc.utils.TestContext;
+import orangehrmpoc.utils.TestDataGenerator;
 
 import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
+import java.util.List;
+import static org.junit.Assert.assertTrue;
+
 public class LoginSteps {
-     private LoginPage loginPage;
+    private final TestContext context;
+    private LoginPage loginPage;
+
+    public LoginSteps(TestContext context) {
+        this.context = context;
+    }
 
 
     @Given("I open the employee application")
@@ -25,5 +37,35 @@ public class LoginSteps {
                 new LoginPage();
 
         loginPage.login();
+        context.adminCookies = List.copyOf(DriverFactory.getDriver().manage().getCookies());
+    }
+
+    @Given("I am logged in as the configured ESS user")
+    public void loginAsEssUser() {
+        loginPage = new LoginPage();
+        loginPage.logout();
+        loginPage.login(
+                ConfigReader.get("essUsername"),
+                ConfigReader.get("essPassword"));
+    }
+
+    @When("I submit invalid login credentials")
+    public void submitInvalidLoginCredentials() {
+        loginPage = new LoginPage();
+        loginPage.submitInvalidCredentials(
+            TestDataGenerator.invalidUsername(),
+            TestDataGenerator.invalidPassword());
+    }
+
+    @Then("the invalid login error should be displayed")
+    public void invalidLoginErrorShouldBeDisplayed() {
+        assertTrue("Invalid credentials error was not displayed",
+                loginPage.isLoginErrorDisplayed());
+    }
+
+    @Then("the login form should remain displayed")
+    public void loginFormShouldRemainDisplayed() {
+        assertTrue("The login form should remain visible after rejected credentials",
+                loginPage.isLoginFormDisplayed());
     }
 }

@@ -13,6 +13,22 @@ parameters:
     - '@employee'
     - '@dataDriven'
     - '@smokeDataDriven'
+    - '@role'
+    - '@loginNegative'
+
+- name: environment
+  displayName: 'Target Environment'
+  type: string
+  default: 'dev'
+  values:
+    - 'dev'
+    - 'qa'
+    - 'prod'
+
+- name: cucumberThreads
+  displayName: 'Parallel Scenario Threads'
+  type: string
+  default: '3'
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -42,6 +58,20 @@ steps:
     jdkSourceOption: 'PreInstalled'
   displayName: 'Setup Java 21'
 
+- script: |
+    sudo apt-get update -qq
+    sudo apt-get install -y ffmpeg
+  displayName: 'Install FFmpeg for HTML Video Playback'
+
+- task: Cache@2
+  inputs:
+    key: 'maven | "$(Agent.OS)" | **/pom.xml'
+    restoreKeys: |
+      maven | "$(Agent.OS)"
+      maven
+    path: '$(Pipeline.Workspace)/.m2/repository'
+  displayName: 'Cache Maven Dependencies'
+
 
 # --------------------------------------------------
 # 3. Verify Java and Maven
@@ -51,6 +81,32 @@ steps:
     java -version
     mvn -version
   displayName: 'Verify Java and Maven'
+
+- script: |
+    require_secret() {
+      name="$1"
+      value="$2"
+      if [ -z "$value" ] || [[ "$value" == \$\(*\) ]]; then
+        echo "Missing Azure DevOps secret variable: $name"
+        return 1
+      fi
+    }
+
+    if [ '${{ parameters.cucumberTag }}' != '@loginNegative' ]; then
+      require_secret ORANGEHRM_USERNAME "$ORANGEHRM_USERNAME" || exit 1
+      require_secret ORANGEHRM_PASSWORD "$ORANGEHRM_PASSWORD" || exit 1
+    fi
+
+    if [ '${{ parameters.cucumberTag }}' = '@role' ]; then
+      require_secret ORANGEHRM_ESS_USERNAME "$ORANGEHRM_ESS_USERNAME" || exit 1
+      require_secret ORANGEHRM_ESS_PASSWORD "$ORANGEHRM_ESS_PASSWORD" || exit 1
+    fi
+  env:
+    ORANGEHRM_USERNAME: $(ORANGEHRM_USERNAME)
+    ORANGEHRM_PASSWORD: $(ORANGEHRM_PASSWORD)
+    ORANGEHRM_ESS_USERNAME: $(ORANGEHRM_ESS_USERNAME)
+    ORANGEHRM_ESS_PASSWORD: $(ORANGEHRM_ESS_PASSWORD)
+  displayName: 'Validate Azure Secret Variables'
 
 
 # --------------------------------------------------
@@ -63,9 +119,17 @@ steps:
     echo "Tag: ${{ parameters.cucumberTag }}"
     echo "======================================"
 
-    mvn clean test \
-      -Dheadless=true \
-      "-Dcucumber.filter.tags=${{ parameters.cucumberTag }}"
+    xvfb-run --auto-servernum mvn -Dmaven.repo.local=$(Pipeline.Workspace)/.m2/repository clean test \
+      -Dtest=CucumberTest \
+      -Denv=${{ parameters.environment }} \
+      -Dcucumber.threads=${{ parameters.cucumberThreads }} \
+      -Dheadless=false \
+      "-Dcucumber.filter.tags=(${{ parameters.cucumberTag }}) and not @quarantine"
+  env:
+    ORANGEHRM_USERNAME: $(ORANGEHRM_USERNAME)
+    ORANGEHRM_PASSWORD: $(ORANGEHRM_PASSWORD)
+    ORANGEHRM_ESS_USERNAME: $(ORANGEHRM_ESS_USERNAME)
+    ORANGEHRM_ESS_PASSWORD: $(ORANGEHRM_ESS_PASSWORD)
   displayName: 'Run Selenium Cucumber Tests'
 
 
@@ -165,3 +229,29 @@ steps:
     ArtifactName: 'Failure-Screenshots'
     publishLocation: 'Container'
   displayName: 'Publish Failure Screenshots'
+
+- script: |
+    mkdir -p target/videos
+    find target/videos -type f -print
+  condition: succeededOrFailed()
+  displayName: 'Prepare Recorded Videos'
+
+- task: PublishBuildArtifacts@1
+  condition: succeededOrFailed()
+  inputs:
+    PathtoPublish: 'target/videos'
+    ArtifactName: 'Test-Videos'
+    publishLocation: 'Container'
+  displayName: 'Publish Test Videos'
+
+- script: mkdir -p target/flaky-tests
+  condition: succeededOrFailed()
+  displayName: 'Prepare Flaky-Test Report'
+
+- task: PublishBuildArtifacts@1
+  condition: succeededOrFailed()
+  inputs:
+    PathtoPublish: 'target/flaky-tests'
+    ArtifactName: 'Flaky-Test-Retry-Events'
+    publishLocation: 'Container'
+  displayName: 'Publish Flaky-Test Retry Events'

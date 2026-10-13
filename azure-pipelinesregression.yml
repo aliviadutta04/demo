@@ -1,5 +1,9 @@
 trigger: none
 
+variables:
+  environment: 'qa'
+  cucumberThreads: 3
+
 
 # ==================================================
 # STAGES
@@ -69,6 +73,20 @@ stages:
 
       displayName: 'Setup Java 21'
 
+    - script: |
+        sudo apt-get update -qq
+        sudo apt-get install -y ffmpeg
+      displayName: 'Install FFmpeg for HTML Video Playback'
+
+    - task: Cache@2
+      inputs:
+        key: 'maven | "$(Agent.OS)" | **/pom.xml'
+        restoreKeys: |
+          maven | "$(Agent.OS)"
+          maven
+        path: '$(Pipeline.Workspace)/.m2/repository'
+      displayName: 'Cache Maven Dependencies'
+
 
     # ==================================================
     # 3. VERIFY JAVA AND MAVEN
@@ -86,6 +104,24 @@ stages:
       displayName: 'Verify Java and Maven'
 
 
+    - script: |
+        require_secret() {
+          name="$1"
+          value="$2"
+          if [ -z "$value" ] || [[ "$value" == \$\(*\) ]]; then
+            echo "Missing Azure DevOps secret variable: $name"
+            return 1
+          fi
+        }
+
+        require_secret ORANGEHRM_USERNAME "$ORANGEHRM_USERNAME" || exit 1
+        require_secret ORANGEHRM_PASSWORD "$ORANGEHRM_PASSWORD" || exit 1
+      env:
+        ORANGEHRM_USERNAME: $(ORANGEHRM_USERNAME)
+        ORANGEHRM_PASSWORD: $(ORANGEHRM_PASSWORD)
+      displayName: 'Validate Azure Admin Secrets'
+
+
     # ==================================================
     # 4. RUN EMPLOYEE TESTS
     # ==================================================
@@ -97,9 +133,18 @@ stages:
         echo "Tag: $(cucumberTag)"
         echo "======================================"
 
-        mvn clean test \
-          -Dheadless=true \
-          "-Dcucumber.filter.tags=$(cucumberTag)"
+        xvfb-run --auto-servernum mvn -Dmaven.repo.local=$(Pipeline.Workspace)/.m2/repository clean test \
+          -Dtest=CucumberTest \
+          -Denv=$(environment) \
+          -Dcucumber.threads=$(cucumberThreads) \
+          -Dheadless=false \
+          "-Dcucumber.filter.tags=($(cucumberTag)) and not @quarantine"
+
+      env:
+        ORANGEHRM_USERNAME: $(ORANGEHRM_USERNAME)
+        ORANGEHRM_PASSWORD: $(ORANGEHRM_PASSWORD)
+        ORANGEHRM_ESS_USERNAME: $(ORANGEHRM_ESS_USERNAME)
+        ORANGEHRM_ESS_PASSWORD: $(ORANGEHRM_ESS_PASSWORD)
 
       displayName: 'Run Employee Tests'
 
@@ -207,3 +252,29 @@ stages:
         publishLocation: 'Container'
 
       displayName: 'Publish Employee Screenshots'
+
+    - script: |
+        mkdir -p target/videos
+        find target/videos -type f -print
+      condition: succeededOrFailed()
+      displayName: 'Prepare Videos'
+
+    - task: PublishBuildArtifacts@1
+      condition: succeededOrFailed()
+      inputs:
+        PathtoPublish: 'target/videos'
+        ArtifactName: 'Employee-Videos-$(cucumberTag)'
+        publishLocation: 'Container'
+      displayName: 'Publish Videos'
+
+    - script: mkdir -p target/flaky-tests
+      condition: succeededOrFailed()
+      displayName: 'Prepare Flaky-Test Report'
+
+    - task: PublishBuildArtifacts@1
+      condition: succeededOrFailed()
+      inputs:
+        PathtoPublish: 'target/flaky-tests'
+        ArtifactName: 'Flaky-Test-Retry-Events-$(cucumberTag)'
+        publishLocation: 'Container'
+      displayName: 'Publish Flaky-Test Retry Events'

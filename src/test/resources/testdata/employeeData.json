@@ -19,7 +19,7 @@
         "middleName": "",
         "lastName": ""
       }
-  },
+    },
     {
       "testCase": "employee2",
       "create": {
