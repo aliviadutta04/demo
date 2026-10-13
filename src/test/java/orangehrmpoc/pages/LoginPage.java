@@ -3,7 +3,6 @@ import orangehrmpoc.config.ConfigReader;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.WebElement;
 public class LoginPage extends BasePage
     {
          private By username =
