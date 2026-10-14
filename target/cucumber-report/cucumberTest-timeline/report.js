@@ -1,4 +1,4 @@
 $(document).ready(function() {
-CucumberHTML.timelineItems.pushArray([{"id":"7271a116-a786-4164-a9f2-0d1e34852554","feature":"Negative login","scenario":"Reject unknown user credentials","start":1791911693192,"group":"main","content":"","tags":"@negative,@loginnegative,","end":1791911712396,"className":"passed"}]);
+CucumberHTML.timelineItems.pushArray([{"id":"28ab7fdc-9cea-4ffe-8796-2ad8be002f05","feature":"Role-based navigation","scenario":"ESS user cannot access administrative navigation","start":1791952914203,"group":"main","content":"","tags":"@role,","end":1791952928428,"className":"passed"}]);
 CucumberHTML.timelineGroups.pushArray([{"id":"main","content":"main"}]);
 });

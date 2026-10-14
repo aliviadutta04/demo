@@ -21,7 +21,7 @@ import orangehrmpoc.retry.RetryAnalyzer;
                                 "orangehrmpoc.hooks"
                 },
 
-                tags = "@loginNegative",
+                tags = "@role",
 
                 plugin = {
                                 "pretty",

@@ -1,1 +1,4 @@
 /src/test/resources/config/config-local.properties
+/.env
+/video/
+/target/videos/

@@ -1,4 +1,4 @@
-@negative @loginNegative
+@loginNegative
 Feature: Negative login
 
   Scenario: Reject unknown user credentials
