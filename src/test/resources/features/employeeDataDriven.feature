@@ -9,7 +9,7 @@ Feature: Employee lifecycle using multiple employee data
   Scenario Outline: Complete employee lifecycle for multiple employees
     When I create a new employee using "<testCase>" data
     Then the employee should be created successfully
-    And the employee role should be validated
+    And the configured Admin user should see Admin and PIM navigation
     When I update the employee details
     Then the employee details should be updated successfully
     And the employee should be verified through API

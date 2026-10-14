@@ -9,8 +9,7 @@
       },
       "update": {
         "lastName": "UpdatedEmployee"
-      },
-      "role": "Admin"
+      }
     },
     {
       "testCase": "invalidEmployee",
@@ -29,8 +28,7 @@
       },
       "update": {
         "lastName": "UpdatedTester"
-      },
-      "role": "Admin"
+      }
     },
     {
       "testCase": "employee3",
@@ -41,8 +39,7 @@
       },
       "update": {
         "lastName": "UpdatedEngineer"
-      },
-      "role": "Admin"
+      }
     }
   ]
 }

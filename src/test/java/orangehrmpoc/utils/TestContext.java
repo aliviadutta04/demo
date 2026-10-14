@@ -1,10 +1,9 @@
 package orangehrmpoc.utils;
 
-import org.openqa.selenium.Cookie;
-import java.util.List;
+import java.util.Map;
 
 public class TestContext {
-    public List<Cookie> adminCookies = List.of();
+    public Map<String, String> adminCookies = Map.of();
     public String employeeId;
     public String employeeNumber;
     public boolean employeeCreationAttempted;

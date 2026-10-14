@@ -3,6 +3,7 @@ trigger: none
 variables:
   environment: 'qa'
   cucumberThreads: 3
+  headless: false
 
 
 # ==================================================
@@ -137,7 +138,7 @@ stages:
           -Dtest=CucumberTest \
           -Denv=$(environment) \
           -Dcucumber.threads=$(cucumberThreads) \
-          -Dheadless=false \
+          -Dheadless=$(headless) \
           "-Dcucumber.filter.tags=($(cucumberTag)) and not @quarantine"
 
       env:

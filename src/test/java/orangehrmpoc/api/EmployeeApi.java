@@ -1,13 +1,13 @@
 package orangehrmpoc.api;
 
 import io.restassured.response.Response;
-import org.openqa.selenium.Cookie;
-import java.util.Collection;
+import orangehrmpoc.config.ConfigReader;
+import java.util.Map;
 
 public class EmployeeApi {
     private final ApiClient apiClient;
 
-    public EmployeeApi(Collection<Cookie> cookies) {
+    public EmployeeApi(Map<String, String> cookies) {
         apiClient = new ApiClient(cookies);
     }
 
@@ -15,13 +15,13 @@ public class EmployeeApi {
         return apiClient
                 .getAuthenticatedRequest()
                 .when()
-                .get("/api/v2/pim/employees/" + empNumber);
+                .get(ConfigReader.get("employee.api.endpoint") + "/" + empNumber);
     }
 
     public Response deleteEmployee(String empNumber) {
         return apiClient
                 .getAuthenticatedRequest()
                 .when()
-                .delete("/api/v2/pim/employees/" + empNumber);
+                .delete(ConfigReader.get("employee.api.endpoint") + "/" + empNumber);
     }
 }

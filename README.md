@@ -16,7 +16,7 @@ The `dev` and `qa` profiles currently target the public OrangeHRM demo site. It 
 
 ## Configuration and Secrets
 
-The `ENVIRONMENT` constant in `CucumberTest.java` (`dev`, `qa`, or `prod`) is the runner's default. Override it with `-Denv=qa` when invoking Maven; an explicit system property takes precedence. The main Azure pipeline exposes an environment parameter, and the regression pipeline sets `qa`. Shared browser settings are in `src/test/resources/config/config.properties`; endpoints are in `config-{environment}.properties`. For other settings, system properties override environment variables, which override profile properties.
+The environment is selected with `-Denv=qa`, `ORANGEHRM_ENV=qa`, or the `environment` property in `src/test/resources/config/config.properties`. The main Azure pipeline exposes an environment parameter, and the regression pipeline sets `qa`. Shared settings, including browser arguments, viewport, timeouts, retry policy, output paths, and video conversion, are in `config.properties`; endpoints are in `config-{environment}.properties`. System properties override environment variables, which override `.env` values and profile properties. Dotted setting names map to underscore-separated environment variables, for example `browser.width` to `ORANGEHRM_BROWSER_WIDTH`.
 
 Set credentials outside the repository:
 
@@ -28,6 +28,7 @@ Set credentials outside the repository:
 | `ORANGEHRM_ESS_PASSWORD` | ESS test password |
 | `ORANGEHRM_BASE_URL` | Optional UI URL override |
 | `ORANGEHRM_API_BASE_URL` | Optional API URL override |
+| `ORANGEHRM_ENV` | Environment profile override (`dev`, `qa`, or `prod`) |
 
 For local runs, copy `.env.example` to `.env` and enter your rotated test credentials there. `.env` is ignored by Git and is loaded by the TestNG runner. For Azure DevOps, define `ORANGEHRM_USERNAME`, `ORANGEHRM_PASSWORD`, `ORANGEHRM_ESS_USERNAME`, and `ORANGEHRM_ESS_PASSWORD` as secret variables in the pipeline or its variable group. The YAML passes them as process environment variables; CI therefore does not need or read a `.env` file. Admin secrets are validated before tests start, and ESS secrets are required only when the selected tag is `@role`. Credentials previously placed in properties files should be rotated before reuse.
 
@@ -51,7 +52,20 @@ Common tag filters include `@smoke`, `@negative`, `@dataDriven`, `@role`, and `@
 mvn -f demo/pom.xml test -Dtest=CucumberTest "-Dcucumber.filter.tags=@loginNegative"
 ```
 
-`CucumberTest` is the single runner for local and CI execution. Cucumber tag expressions select scenarios with `-Dcucumber.filter.tags`. Its scenario data provider runs three threads by default; set `-Dcucumber.threads=1` for serial execution or raise it to increase parallelism.
+Run the framework-only tests without launching a browser, then validate the k6 settings with Node:
+
+```powershell
+mvn -f demo/pom.xml "-Dtest=ConfigReaderTest,RetryAnalyzerTest" test
+node --test demo/performance/config.test.cjs
+```
+
+`CucumberTest` is the single runner for local and CI execution. Runner feature, glue, and report settings are in `src/test/resources/cucumber.properties`; Cucumber tag expressions select scenarios with `-Dcucumber.filter.tags`. The runner permits concurrent scenarios only when they carry `@parallel`; all other scenarios take an exclusive execution lock. Up to three `@parallel` scenarios run concurrently by default; set `-Dcucumber.threads=1` to disable concurrency. The role suite checks the configured Admin account's Admin/PIM access and the configured ESS account's My Info access and lack of Admin/PIM access.
+
+`SmokeCucumberRunner` is the fixed parallel suite for the `@smoke` and `@negative` scenarios. It runs those selected scenarios concurrently without requiring `@parallel` on their feature declarations:
+
+```powershell
+mvn -f demo/pom.xml "-Dtest=SmokeCucumberRunner" -Dheadless=true test
+```
 
 The Azure pipelines run the same runner with Xvfb, non-headless Chrome, Maven dependency caching, and publish Surefire/Cucumber reports, screenshots, and recordings. CI excludes scenarios tagged `@quarantine`.
 
@@ -73,9 +87,31 @@ The Azure pipelines run the same runner with Xvfb, non-headless Chrome, Maven de
 - Failure screenshots: `target/screenshots`
 - Video recordings: `target/videos`
 - Flaky retry events: `target/flaky-tests/retry-events.csv`
+- k6 performance reports: `target/performance-results` (Azure artifact: `K6-Performance-Reports`)
 
 These are generated outputs and should not be committed.
 
+## Performance Testing
+
+Optional k6 scripts are in `performance/`; their defaults are in `performance/config.json`. The login scenario measures the configured login endpoint; the employee-create scenario authenticates per virtual user, creates uniquely named employees, and deletes each created employee after recording the create latency. Configure `K6_BASE_URL` to the API origin/base path and verify the login endpoint, payload, content type, expected statuses, and employee response shape for the target OrangeHRM version. The employee-create API must return `data.empNumber` so cleanup can run; successful creates without that identifier fail the iteration and require manual cleanup.
+
+Install k6 from [k6.io](https://grafana.com/docs/k6/latest/set-up/install-k6/) and set the relevant values from `.env.example` in your shell. For example, in PowerShell:
+
+```powershell
+Push-Location demo
+$env:ORANGEHRM_USERNAME = 'your-admin-test-user'
+$env:ORANGEHRM_PASSWORD = 'your-admin-test-password'
+$env:K6_BASE_URL = 'https://your-host/web/index.php'
+$env:K6_VUS = '2'
+$env:K6_DURATION = '30s'
+New-Item -ItemType Directory -Force performance-results | Out-Null
+k6 run performance/login.js
+k6 run performance/employee-create.js
+Pop-Location
+```
+
+Both scripts enforce check-rate, HTTP error-rate, and p95 latency thresholds. They generate HTML and JSON summaries under `performance-results` by default; set `K6_REPORT_DIR` to change the destination. The Azure pipeline exposes `runPerformance`, defaulting to `false`; enable it only against an approved test environment, set the `K6_BASE_URL` pipeline variable, and optionally define the documented `K6_*` pipeline variables to override load, endpoint, payload, and threshold defaults. Credentials are supplied through the existing Admin secret variables. Performance reports publish as a separate build artifact.
+
 ## Current Role-Test Requirement
 
-The role scenario verifies that a provisioned ESS account sees My Info and does not see Admin or PIM. The public demo does not provide a stable, documented account-provisioning API contract, so account creation is intentionally external; provision the ESS user and configure its credentials as secret variables before running `@role`.
+The role suite verifies both configured Admin and ESS navigation permissions. The public demo does not provide a stable, documented account-provisioning API contract, so account creation is intentionally external; provision the ESS user and configure its credentials as secret variables before running `@role`.

@@ -37,31 +37,37 @@ public class DriverFactory {
     private static ChromeOptions chromeOptions(boolean headless) {
         ChromeOptions options = new ChromeOptions();
         if (headless) {
-            options.addArguments("--headless=new");
+            options.addArguments(ConfigReader.get("browser.chrome.headlessArgument"));
         }
-        options.addArguments("--no-sandbox", "--disable-dev-shm-usage", "--window-size=1920,1080",
-                "--disable-notifications");
+        options.addArguments(ConfigReader.get("browser.chrome.arguments").split(","));
+        options.addArguments("--window-size=" + browserSize());
         return options;
     }
 
     private static FirefoxOptions firefoxOptions(boolean headless) {
         FirefoxOptions options = new FirefoxOptions();
         if (headless) {
-            options.addArguments("-headless");
+            options.addArguments(ConfigReader.get("browser.firefox.headlessArgument"));
         }
-        options.addArguments("--width=1920", "--height=1080");
-        options.addPreference("dom.webnotifications.enabled", false);
+        options.addArguments("--width=" + ConfigReader.get("browser.width"),
+                "--height=" + ConfigReader.get("browser.height"));
+        options.addPreference(ConfigReader.get("browser.firefox.notificationPreference"),
+            Boolean.parseBoolean(ConfigReader.get("browser.firefox.notificationsEnabled")));
         return options;
     }
 
     private static EdgeOptions edgeOptions(boolean headless) {
         EdgeOptions options = new EdgeOptions();
         if (headless) {
-            options.addArguments("--headless=new");
+            options.addArguments(ConfigReader.get("browser.edge.headlessArgument"));
         }
-        options.addArguments("--no-sandbox", "--disable-dev-shm-usage", "--window-size=1920,1080",
-                "--disable-notifications");
+        options.addArguments(ConfigReader.get("browser.edge.arguments").split(","));
+        options.addArguments("--window-size=" + browserSize());
         return options;
+    }
+
+    private static String browserSize() {
+        return ConfigReader.get("browser.width") + "," + ConfigReader.get("browser.height");
     }
 
     public static WebDriver getDriver() {

@@ -30,6 +30,22 @@ parameters:
   type: string
   default: '3'
 
+- name: headless
+  displayName: 'Run Browser Headless'
+  type: string
+  default: 'false'
+  values:
+    - 'true'
+    - 'false'
+
+- name: runPerformance
+  displayName: 'Run k6 Performance Tests'
+  type: string
+  default: 'false'
+  values:
+    - 'true'
+    - 'false'
+
 pool:
   vmImage: 'ubuntu-latest'
 
@@ -83,30 +99,40 @@ steps:
   displayName: 'Verify Java and Maven'
 
 - script: |
-    require_secret() {
+    require_variable() {
       name="$1"
       value="$2"
       if [ -z "$value" ] || [[ "$value" == \$\(*\) ]]; then
-        echo "Missing Azure DevOps secret variable: $name"
+        echo "Missing Azure DevOps variable: $name"
         return 1
       fi
     }
 
-    if [ '${{ parameters.cucumberTag }}' != '@loginNegative' ]; then
-      require_secret ORANGEHRM_USERNAME "$ORANGEHRM_USERNAME" || exit 1
-      require_secret ORANGEHRM_PASSWORD "$ORANGEHRM_PASSWORD" || exit 1
+    if [ '${{ parameters.cucumberTag }}' != '@loginNegative' ] || [ '${{ parameters.runPerformance }}' = 'true' ]; then
+      require_variable ORANGEHRM_USERNAME "$ORANGEHRM_USERNAME" || exit 1
+      require_variable ORANGEHRM_PASSWORD "$ORANGEHRM_PASSWORD" || exit 1
+    fi
+
+    if [ '${{ parameters.runPerformance }}' = 'true' ]; then
+      require_variable K6_BASE_URL "$K6_BASE_URL" || exit 1
     fi
 
     if [ '${{ parameters.cucumberTag }}' = '@role' ]; then
-      require_secret ORANGEHRM_ESS_USERNAME "$ORANGEHRM_ESS_USERNAME" || exit 1
-      require_secret ORANGEHRM_ESS_PASSWORD "$ORANGEHRM_ESS_PASSWORD" || exit 1
+      require_variable ORANGEHRM_ESS_USERNAME "$ORANGEHRM_ESS_USERNAME" || exit 1
+      require_variable ORANGEHRM_ESS_PASSWORD "$ORANGEHRM_ESS_PASSWORD" || exit 1
     fi
   env:
     ORANGEHRM_USERNAME: $(ORANGEHRM_USERNAME)
     ORANGEHRM_PASSWORD: $(ORANGEHRM_PASSWORD)
     ORANGEHRM_ESS_USERNAME: $(ORANGEHRM_ESS_USERNAME)
     ORANGEHRM_ESS_PASSWORD: $(ORANGEHRM_ESS_PASSWORD)
+    K6_BASE_URL: $(K6_BASE_URL)
   displayName: 'Validate Azure Secret Variables'
+
+- script: |
+    mvn -Dmaven.repo.local=$(Pipeline.Workspace)/.m2/repository "-Dtest=ConfigReaderTest,RetryAnalyzerTest,ParallelExecutionPolicyTest" test
+    node --test performance/config.test.cjs
+  displayName: 'Run Framework Utility Tests'
 
 
 # --------------------------------------------------
@@ -123,7 +149,7 @@ steps:
       -Dtest=CucumberTest \
       -Denv=${{ parameters.environment }} \
       -Dcucumber.threads=${{ parameters.cucumberThreads }} \
-      -Dheadless=false \
+      -Dheadless=${{ parameters.headless }} \
       "-Dcucumber.filter.tags=(${{ parameters.cucumberTag }}) and not @quarantine"
   env:
     ORANGEHRM_USERNAME: $(ORANGEHRM_USERNAME)
@@ -131,6 +157,40 @@ steps:
     ORANGEHRM_ESS_USERNAME: $(ORANGEHRM_ESS_USERNAME)
     ORANGEHRM_ESS_PASSWORD: $(ORANGEHRM_ESS_PASSWORD)
   displayName: 'Run Selenium Cucumber Tests'
+
+- script: mkdir -p target/performance-results
+  condition: and(always(), eq('${{ parameters.runPerformance }}', 'true'))
+  displayName: 'Prepare k6 Report Directory'
+
+- script: |
+    curl -fsSL https://dl.k6.io/key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/k6-archive-keyring.gpg
+    echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
+      | sudo tee /etc/apt/sources.list.d/k6.list
+    sudo apt-get update -qq
+    sudo apt-get install -y k6
+    k6 version
+  condition: and(succeeded(), eq('${{ parameters.runPerformance }}', 'true'))
+  displayName: 'Install k6'
+
+- script: |
+    mkdir -p target/performance-results
+    k6 run performance/login.js
+    k6 run performance/employee-create.js
+  condition: and(succeeded(), eq('${{ parameters.runPerformance }}', 'true'))
+  env:
+    K6_BASE_URL: $(K6_BASE_URL)
+    K6_REPORT_DIR: target/performance-results
+    ORANGEHRM_USERNAME: $(ORANGEHRM_USERNAME)
+    ORANGEHRM_PASSWORD: $(ORANGEHRM_PASSWORD)
+  displayName: 'Run k6 Performance Scenarios'
+
+- task: PublishBuildArtifacts@1
+  condition: and(succeededOrFailed(), eq('${{ parameters.runPerformance }}', 'true'))
+  inputs:
+    PathtoPublish: 'target/performance-results'
+    ArtifactName: 'K6-Performance-Reports'
+    publishLocation: 'Container'
+  displayName: 'Publish k6 Performance Reports'
 
 
 # --------------------------------------------------

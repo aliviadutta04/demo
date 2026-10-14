@@ -3,13 +3,12 @@ package orangehrmpoc.api;
 import io.restassured.RestAssured;
 import io.restassured.specification.RequestSpecification;
 import orangehrmpoc.config.ConfigReader;
-import org.openqa.selenium.Cookie;
-import java.util.Collection;
+import java.util.Map;
 
 public class ApiClient {
-    private final Collection<Cookie> cookies;
+    private final Map<String, String> cookies;
 
-    public ApiClient(Collection<Cookie> cookies) {
+    public ApiClient(Map<String, String> cookies) {
         this.cookies = cookies;
     }
 
@@ -21,12 +20,8 @@ public class ApiClient {
                         .baseUri(ConfigReader.get("apiBaseUrl"))
                         .header("Accept", "application/json");
 
-        for (Cookie cookie : cookies) {
-
-            request.cookie(
-                    cookie.getName(),
-                    cookie.getValue()
-            );
+        for (Map.Entry<String, String> cookie : cookies.entrySet()) {
+            request.cookie(cookie.getKey(), cookie.getValue());
         }
 
         return request;

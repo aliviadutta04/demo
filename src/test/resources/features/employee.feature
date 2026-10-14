@@ -5,18 +5,18 @@ Feature: Employee lifecycle
     Given I open the employee application
     And I login with valid credentials
 
-  @smoke @parallel
+  @smoke 
   Scenario: Complete employee lifecycle
     When I create a new employee using "employee1" data
     Then the employee should be created successfully
-    And the employee role should be validated
+    And the configured Admin user should see Admin and PIM navigation
     When I update the employee details
     Then the employee details should be updated successfully
     And the employee should be verified through API
     When I delete the employee
     Then the employee should be deleted successfully
 
-    @negative @parallel
+    @negative 
   Scenario: Create employee without mandatory details
     When I open the add employee page
     And I click the save employee button

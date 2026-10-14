@@ -1,5 +1,6 @@
 package orangehrmpoc.utils;
 
+import orangehrmpoc.config.ConfigReader;
 import java.util.UUID;
 
 public final class TestDataGenerator {
@@ -7,7 +8,8 @@ public final class TestDataGenerator {
     }
 
     public static String uniqueSuffix() {
-        return UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+        int suffixLength = Integer.parseInt(ConfigReader.get("testdata.uniqueSuffixLength"));
+        return UUID.randomUUID().toString().replace("-", "").substring(0, suffixLength);
     }
 
     public static String uniqueValue(String value) {
@@ -15,7 +17,7 @@ public final class TestDataGenerator {
     }
 
     public static String invalidUsername() {
-        return "unknown_" + uniqueSuffix();
+        return ConfigReader.get("testdata.invalidUsernamePrefix") + uniqueSuffix();
     }
 
     public static String invalidPassword() {

@@ -1,6 +1,7 @@
 package orangehrmpoc.retry;
 
 import io.cucumber.testng.PickleWrapper;
+import orangehrmpoc.config.ConfigReader;
 import orangehrmpoc.config.MissingConfigurationException;
 import org.testng.IRetryAnalyzer;
 import org.testng.ITestResult;
@@ -13,30 +14,27 @@ import java.util.logging.Logger;
 
 public class RetryAnalyzer implements IRetryAnalyzer {
     private static final Logger LOGGER = Logger.getLogger(RetryAnalyzer.class.getName());
-    private static final Path RETRY_REPORT = Path.of("target", "flaky-tests", "retry-events.csv");
+    private static final Path RETRY_REPORT = Path.of(ConfigReader.get("retry.report"));
     private int retryCount = 0;
-    private static final int MAX_RETRY_COUNT = Integer.getInteger("retry.maxAttempts", 2);
+    private static final int MAX_RETRY_COUNT = Integer.parseInt(ConfigReader.get("retry.maxAttempts"));
 
     @Override
     public boolean retry(ITestResult result) {
-        if (hasMissingConfigurationCause(result.getThrowable())) {
+        if (!isRetryAllowed(retryCount, MAX_RETRY_COUNT, result.getThrowable())) {
+            if (hasMissingConfigurationCause(result.getThrowable())) {
             LOGGER.severe("Not retrying scenario with missing configuration: " + result.getName());
+            } else {
+                LOGGER.severe("Retry limit reached for scenario " + scenarioName(result));
+            }
             return false;
         }
 
-        boolean willRetry = retryCount < MAX_RETRY_COUNT;
         int attempt = retryCount + 1;
-        recordFailure(result, attempt, willRetry);
-
-        if (willRetry) {
-            retryCount++;
-            LOGGER.warning("Retrying failed scenario " + scenarioName(result) + " (attempt "
-                    + retryCount + " of " + MAX_RETRY_COUNT + ")");
-            return true;
-        }
-
-        LOGGER.severe("Retry limit reached for scenario " + scenarioName(result));
-        return false;
+        retryCount++;
+        recordFailure(result, attempt, true);
+        LOGGER.warning("Retrying failed scenario " + scenarioName(result) + " (attempt "
+                + retryCount + " of " + MAX_RETRY_COUNT + ")");
+        return true;
     }
 
     private static synchronized void recordFailure(ITestResult result, int attempt, boolean willRetry) {
@@ -72,7 +70,11 @@ public class RetryAnalyzer implements IRetryAnalyzer {
         return "\"" + value.replace("\"", "\"\"") + "\"";
     }
 
-    private boolean hasMissingConfigurationCause(Throwable failure) {
+    static boolean isRetryAllowed(int retryCount, int maximumRetries, Throwable failure) {
+        return retryCount < maximumRetries && !hasMissingConfigurationCause(failure);
+    }
+
+    private static boolean hasMissingConfigurationCause(Throwable failure) {
         while (failure != null) {
             if (failure instanceof MissingConfigurationException) {
                 return true;

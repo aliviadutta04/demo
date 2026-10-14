@@ -20,7 +20,8 @@ public class VideoFileManager {
             try (Stream<Path> files = Files.list(videoFolder)) {
                 recordingCount = files
                         .filter(Files::isRegularFile)
-                        .filter(path -> path.getFileName().toString().endsWith(".avi"))
+                    .filter(path -> path.getFileName().toString()
+                        .endsWith(ConfigReader.get("video.sourceExtension")))
                         .count();
             }
             if (recordingCount == 0) {

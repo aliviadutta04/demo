@@ -8,8 +8,9 @@ import orangehrmpoc.utils.TestDataGenerator;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import java.util.List;
-import static org.junit.Assert.assertTrue;
+import org.openqa.selenium.Cookie;
+import java.util.stream.Collectors;
+import static org.testng.Assert.assertTrue;
 
 public class LoginSteps {
     private final TestContext context;
@@ -37,7 +38,8 @@ public class LoginSteps {
                 new LoginPage();
 
         loginPage.login();
-        context.adminCookies = List.copyOf(DriverFactory.getDriver().manage().getCookies());
+        context.adminCookies = DriverFactory.getDriver().manage().getCookies().stream()
+            .collect(Collectors.toUnmodifiableMap(Cookie::getName, Cookie::getValue));
     }
 
     @Given("I am logged in as the configured ESS user")
@@ -59,13 +61,12 @@ public class LoginSteps {
 
     @Then("the invalid login error should be displayed")
     public void invalidLoginErrorShouldBeDisplayed() {
-        assertTrue("Invalid credentials error was not displayed",
-                loginPage.isLoginErrorDisplayed());
+        assertTrue(loginPage.isLoginErrorDisplayed(), "Invalid credentials error was not displayed");
     }
 
     @Then("the login form should remain displayed")
     public void loginFormShouldRemainDisplayed() {
-        assertTrue("The login form should remain visible after rejected credentials",
-                loginPage.isLoginFormDisplayed());
+        assertTrue(loginPage.isLoginFormDisplayed(),
+            "The login form should remain visible after rejected credentials");
     }
 }

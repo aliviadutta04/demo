@@ -1,8 +1,12 @@
 package orangehrmpoc.config;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
 
 public class ConfigReader {
@@ -10,10 +14,9 @@ public class ConfigReader {
     private static final Properties dotEnv = new Properties();
 
     static {
-        String environment = System.getProperty("env", "dev").toLowerCase();
         load("/config/config.properties");
-        load("/config/config-" + environment + ".properties");
         loadDotEnv();
+        load("/config/config-" + configuredEnvironment() + ".properties");
     }
 
     private static void load(String resource) {
@@ -30,14 +33,40 @@ public class ConfigReader {
         }
     }
 
+    private static String configuredEnvironment() {
+        String environment = System.getProperty("env");
+        if (environment == null || environment.isBlank()) {
+            environment = System.getenv(toEnvironmentVariable("env"));
+        }
+        if (environment == null || environment.isBlank()) {
+            environment = dotEnv.getProperty(toEnvironmentVariable("env"));
+        }
+        if (environment == null || environment.isBlank()) {
+            environment = properties.getProperty("environment");
+        }
+        if (environment == null || environment.isBlank()) {
+            throw new MissingConfigurationException("Property is not configured: environment");
+        }
+        return environment.trim().toLowerCase(Locale.ROOT);
+    }
+
     private static void loadDotEnv() {
         Path workingDirectory = Path.of(System.getProperty("user.dir")).toAbsolutePath();
-        Path projectEnvFile = workingDirectory.resolve("demo/.env");
-        Path localEnvFile = Files.exists(projectEnvFile)
-                ? projectEnvFile
-                : workingDirectory.resolve(".env");
+        String configuredPaths = System.getProperty("env.file.paths");
+        if (configuredPaths == null || configuredPaths.isBlank()) {
+            configuredPaths = System.getenv("ORANGEHRM_ENV_FILE_PATHS");
+        }
+        if (configuredPaths == null || configuredPaths.isBlank()) {
+            configuredPaths = properties.getProperty("env.file.paths");
+        }
+        Path localEnvFile = Arrays.stream(configuredPaths.split(","))
+                .map(String::trim)
+                .map(workingDirectory::resolve)
+                .filter(Files::exists)
+                .findFirst()
+                .orElse(null);
 
-        if (!Files.exists(localEnvFile)) {
+        if (localEnvFile == null) {
             return;
         }
 
@@ -71,30 +100,39 @@ public class ConfigReader {
     }
 
     public static String get(String key) {
-        String systemValue = System.getProperty(key);
+        return resolveValue(key, System.getProperties(), System.getenv(), dotEnv, properties);
+    }
+
+    static String resolveValue(
+            String key,
+            Properties systemProperties,
+            Map<String, String> environmentVariables,
+            Properties dotenvProperties,
+            Properties profileProperties) {
+        String systemValue = systemProperties.getProperty(key);
         if (systemValue != null && !systemValue.isBlank()) {
             return systemValue;
         }
 
-        String environmentValue = System.getenv(toEnvironmentVariable(key));
+        String environmentValue = environmentVariables.get(toEnvironmentVariable(key));
         if (environmentValue != null && !environmentValue.isBlank()) {
             return environmentValue;
         }
 
-        String dotEnvValue = dotEnv.getProperty(toEnvironmentVariable(key));
+        String dotEnvValue = dotenvProperties.getProperty(toEnvironmentVariable(key));
         if (dotEnvValue != null && !dotEnvValue.isBlank()) {
             return dotEnvValue;
         }
 
-        String value = properties.getProperty(key);
+        String value = profileProperties.getProperty(key);
         if (value == null || value.isBlank()) {
             throw new MissingConfigurationException("Property is not configured: " + key);
         }
         return value;
     }
 
-    private static String toEnvironmentVariable(String key) {
+    static String toEnvironmentVariable(String key) {
         return "ORANGEHRM_" + key.replaceAll("([a-z])([A-Z])", "$1_$2")
-                .replace('-', '_').toUpperCase();
+                .replace('-', '_').replace('.', '_').toUpperCase(Locale.ROOT);
     }
 }

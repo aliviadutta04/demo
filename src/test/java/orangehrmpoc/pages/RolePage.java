@@ -1,9 +1,12 @@
 package orangehrmpoc.pages;
 
+import orangehrmpoc.config.ConfigReader;
 import org.openqa.selenium.By;
 import java.time.Duration;
 
 public class RolePage extends BasePage {
+    private static final Duration ABSENCE_TIMEOUT = Duration.ofSeconds(
+            Integer.parseInt(ConfigReader.get("role.absenceTimeout")));
     private By adminMenu = By.cssSelector("a[href*='/admin/viewAdminModule']");
     private By myInfoMenu = By.cssSelector("a[href*='/pim/viewMyDetails']");
 
@@ -20,10 +23,10 @@ public class RolePage extends BasePage {
     }
 
     public boolean isAdminMenuAbsent() {
-        return isAbsent(adminMenu, Duration.ofSeconds(2));
+        return isAbsent(adminMenu, ABSENCE_TIMEOUT);
     }
 
     public boolean isPIMMenuAbsent() {
-        return isAbsent(PIM_MENU, Duration.ofSeconds(2));
+        return isAbsent(PIM_MENU, ABSENCE_TIMEOUT);
     }
 }

@@ -17,12 +17,19 @@ import io.restassured.response.Response;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Hooks {
     private static final Logger LOGGER = Logger.getLogger(Hooks.class.getName());
+    private static final Set<Integer> CLEANUP_SUCCESS_STATUSES = Arrays.stream(
+                    ConfigReader.get("employee.cleanup.successStatuses").split(","))
+            .map(Integer::parseInt)
+            .collect(Collectors.toUnmodifiableSet());
     private final TestContext context;
     private IVideoRecorder videoRecorder;
 
@@ -32,7 +39,7 @@ public class Hooks {
 
     @Before
     public void setUp(Scenario scenario) {
-        if (!scenario.getSourceTagNames().contains("@loginNegative")) {
+        if (!scenario.getSourceTagNames().contains(ConfigReader.get("tags.loginNegative"))) {
             ConfigReader.get("username");
             ConfigReader.get("password");
         }
@@ -52,9 +59,10 @@ public class Hooks {
                             .getScreenshotAs(OutputType.BYTES);
                     scenario.attach(screenshot, "image/png", "Failure Screenshot");
 
-                    String fileName = scenario.getName()
-                            .replaceAll("[^a-zA-Z0-9-_]", "_") + ".png";
-                    Path directory = Path.of("target", "screenshots");
+                        String fileName = scenario.getName()
+                            .replaceAll("[^a-zA-Z0-9-_]", "_")
+                            + "_" + UUID.randomUUID() + ".png";
+                    Path directory = Path.of(ConfigReader.get("screenshots.folder"));
                     Files.createDirectories(directory);
                     Files.write(directory.resolve(fileName), screenshot);
                 } catch (IOException | RuntimeException e) {
@@ -71,7 +79,7 @@ public class Hooks {
                     try {
                         Response response = new EmployeeApi(context.adminCookies)
                                 .deleteEmployee(context.employeeNumber);
-                        cleaned = response.statusCode() == 200 || response.statusCode() == 204;
+                        cleaned = CLEANUP_SUCCESS_STATUSES.contains(response.statusCode());
                         if (!cleaned) {
                             LOGGER.warning("API cleanup returned HTTP " + response.statusCode()
                                     + "; falling back to UI cleanup");

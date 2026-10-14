@@ -64,14 +64,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- JUnit - still used by assertions in step classes -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
-            <scope>test</scope>
-        </dependency>
-
         <!-- Gson -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
